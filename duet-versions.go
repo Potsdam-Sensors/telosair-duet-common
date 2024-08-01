@@ -23,6 +23,7 @@ type DuetData interface {
 }
 
 func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, err error) {
+	log.Print("Here")
 	splitStr = strings.Split(strings.TrimSpace(s), " ")
 	var hwVer, snsVar uint8
 	if len(splitStr) < 2 {
@@ -64,6 +65,7 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 
 func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error) {
 	/* Validate Arguments */
+	log.Print("!")
 	splitStr, typeInfo, err := getVersionFromString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get duet type info: %w", err)
