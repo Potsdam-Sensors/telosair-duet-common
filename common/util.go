@@ -1,9 +1,5 @@
 package common
 
-import (
-	"fmt"
-)
-
 /* ~~ Keys & Constants ~~ */
 const (
 	KEY_HTU_TEMP        = "temp_htu"
@@ -37,14 +33,14 @@ const (
 	CONNECTION_TYPE_USB_SERIAL   = 2
 )
 
-func validateConnectionType(t int) error {
-	switch t {
-	case CONNECTION_TYPE_LORA_GATEWAY, CONNECTION_TYPE_LORAWAN, CONNECTION_TYPE_USB_SERIAL:
-		return nil
-	default:
-		return fmt.Errorf("unable to validate connection type given: %d", t)
-	}
-}
+// func validateConnectionType(t int) error {
+// 	switch t {
+// 	case CONNECTION_TYPE_LORA_GATEWAY, CONNECTION_TYPE_LORAWAN, CONNECTION_TYPE_USB_SERIAL:
+// 		return nil
+// 	default:
+// 		return fmt.Errorf("unable to validate connection type given: %d", t)
+// 	}
+// }
 
 // /* ~~ Type Checking ~~ */
 // // TODO: PT & Gas stuff
