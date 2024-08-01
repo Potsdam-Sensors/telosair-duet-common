@@ -23,7 +23,6 @@ type DuetData interface {
 }
 
 func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, err error) {
-	log.Print("Here")
 	splitStr = strings.Split(strings.TrimSpace(s), " ")
 	var hwVer, snsVar uint8
 	if len(splitStr) < 2 {
@@ -65,11 +64,11 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 
 func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error) {
 	/* Validate Arguments */
-	log.Print("!")
 	splitStr, typeInfo, err := getVersionFromString(s)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get duet type info: %w", err)
 	}
+	log.Printf("Got type info: %s", typeInfo.TypeAlias)
 	if err := typeInfo.CheckSubstringLen(len(splitStr)); err != nil {
 		return nil, err
 	}
@@ -143,6 +142,7 @@ var DuetTypeMk4Var0 = DuetTypeInfo{
 	ExpectedBytes:        70,
 	ExpectedStringLen:    15,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var0{} },
+	TypeAlias:            "Mk4.0",
 }
 
 type DuetDataMk4Var0 struct {
@@ -342,6 +342,7 @@ var DuetTypeMk4Var3 = DuetTypeInfo{
 	ExpectedBytes:        90,
 	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var3{} },
+	TypeAlias:            "Mk4.3",
 }
 
 type DuetDataMk4Var3 struct {
