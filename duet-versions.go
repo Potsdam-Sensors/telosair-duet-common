@@ -60,20 +60,22 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 	return
 }
 
-func DuetDataFromSerialString(d DuetData, s string, recievedUnixSec uint32) error {
+func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error) {
 	/* Validate Arguments */
 	splitStr, typeInfo, err := getVersionFromString(s)
 	if err != nil {
-		return fmt.Errorf("failed to get duet type info: %w", err)
+		return nil, fmt.Errorf("failed to get duet type info: %w", err)
 	}
 	if err := typeInfo.CheckSubstringLen(len(splitStr)); err != nil {
-		return err
+		return nil, err
 	}
+
+	d := typeInfo.StructInstanceGetter()
 
 	/* Field Population */
 	// Use the string split up by separator to populate data sample fields
 	if err := d.doPopulateFromSubStrings(splitStr); err != nil {
-		return err
+		return nil, err
 	}
 
 	// USB specific stuff
@@ -82,9 +84,9 @@ func DuetDataFromSerialString(d DuetData, s string, recievedUnixSec uint32) erro
 
 	d.RecalculateLastResetUnix()
 
-	return nil
-
+	return d, nil
 }
+
 func PopulateFromRadioBytes(d DuetData, buff []byte, recievedUnixSec uint32) error {
 	typeInfo := d.GetTypeInfo()
 
