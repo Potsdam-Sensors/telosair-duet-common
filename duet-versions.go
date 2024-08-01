@@ -20,6 +20,7 @@ type DuetData interface {
 	RecalculateLastResetUnix()
 	GetTypeInfo() DuetTypeInfo
 	String() string
+	SetPiMcuTemp(val float32)
 	// String() string
 }
 
@@ -153,6 +154,7 @@ type DuetDataMk4Var0 struct {
 	SensorStates   uint8
 	PoeUsbVoltage  uint8
 	ConnectionType int
+	PiMcuTemp      float32
 
 	Pt1       Pms5003Measurement
 	Pt2       Pms5003Measurement
@@ -165,6 +167,9 @@ type DuetDataMk4Var0 struct {
 	RadioMeta RadioMetadata
 }
 
+func (d *DuetDataMk4Var0) SetPiMcuTemp(val float32) {
+	d.PiMcuTemp = val
+}
 func (d *DuetDataMk4Var0) String() string {
 	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PT1: %s | PT2: %s | PTM: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
 		d.SerialNumber, 4, 0, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Pt1.String(), d.Pt2.String(), d.PtM.String(),
@@ -358,6 +363,7 @@ type DuetDataMk4Var3 struct {
 	SensorStates   uint8
 	PoeUsbVoltage  uint8
 	ConnectionType int
+	PiMcuTemp      float32
 
 	Sps       Sps30Measurement
 	Scd       Scd41Measurement
@@ -370,6 +376,9 @@ type DuetDataMk4Var3 struct {
 	Co, No2, Ch4 float32
 }
 
+func (d *DuetDataMk4Var3) SetPiMcuTemp(val float32) {
+	d.PiMcuTemp = val
+}
 func (d *DuetDataMk4Var3) String() string {
 	return fmt.Sprintf("[Duet %d, Type 4.3 | Unix %d | Co %.2f, NO2: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
 		d.SerialNumber, d.UnixSec, d.Co, d.No2, d.Ch4, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
