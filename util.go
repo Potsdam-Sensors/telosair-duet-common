@@ -1,4 +1,4 @@
-package common
+package telosairduetcommon
 
 /* ~~ Keys & Constants ~~ */
 const (

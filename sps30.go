@@ -1,3 +1,3 @@
-package common
+package telosairduetcommon
 
 type Sps30Measurement = Pms5003Measurement

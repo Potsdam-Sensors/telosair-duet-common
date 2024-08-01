@@ -1,4 +1,4 @@
-package common
+package telosairduetcommon
 
 import (
 	"encoding/binary"

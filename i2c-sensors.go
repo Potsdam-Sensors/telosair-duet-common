@@ -1,4 +1,4 @@
-package common
+package telosairduetcommon
 
 /* ~~ Temp & Rh ~~ */
 type TempRhMeasurement interface {
