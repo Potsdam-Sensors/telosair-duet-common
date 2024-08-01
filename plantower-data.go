@@ -16,6 +16,11 @@ type Pms5003Measurement struct {
 	PN0p3, PN0p5, PN1, PN2p5, PN5, PN10 uint16
 }
 
+func (m *Pms5003Measurement) String() string {
+	return fmt.Sprintf("PM 1: %d, 2.5: %d, 10: %d | PN 0.3: %d, 0.5: %d, 1: %d, 2.5: %d, 5: %d, 10: %d",
+		m.PM1, m.PM2p5, m.PM10, m.PN0p3, m.PN0p5, m.PN1, m.PN2p5, m.PN5, m.PN10)
+}
+
 /*
 Convert the sample to a map, adding the suffix to the end of each key.
 */
@@ -156,8 +161,4 @@ func (p *Pms5003Measurement) FromSerialString(s string) error {
 	}
 
 	return nil
-}
-
-func (m *Pms5003Measurement) String() string {
-	return fmt.Sprintf("[PM 1: %d, 2.5: %d, 10: %d | PN 0.3: %d, 0.5: %d, 1: %d, 2.5: %d, 5: %d, 10: %d]", m.PM1, m.PM2p5, m.PM10, m.PN0p3, m.PN0p5, m.PN1, m.PN2p5, m.PN5, m.PN10)
 }

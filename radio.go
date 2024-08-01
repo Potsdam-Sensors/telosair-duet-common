@@ -1,5 +1,7 @@
 package telosairduetcommon
 
+import "fmt"
+
 type RadioMetadata struct {
 	LastSnr         int32
 	LastRssi        int16
@@ -16,4 +18,8 @@ func (m *RadioMetadata) ToMap() map[string]any {
 		KEY_SNR:  m.LastSnr,
 		KEY_HOPS: m.Hops,
 	}
+}
+
+func (m *RadioMetadata) String() string {
+	return fmt.Sprintf("Radio: RSSI %d, SNR %d, Hops %d", m.LastRssi, m.LastSnr, m.Hops)
 }

@@ -1,5 +1,7 @@
 package telosairduetcommon
 
+import "fmt"
+
 /* ~~ Temp & Rh ~~ */
 type TempRhMeasurement interface {
 	Temperature() float32
@@ -11,6 +13,9 @@ type CombinedTempRhMeasurements struct {
 	Temp, Hum float32
 }
 
+func (m CombinedTempRhMeasurements) String() string {
+	return fmt.Sprintf("%.1fC, %.1f%", m.Temp, m.Hum)
+}
 func (m CombinedTempRhMeasurements) Temperature() float32 {
 	return m.Temp
 }
@@ -34,6 +39,9 @@ type Htu21Measurement struct {
 	Temp, Hum float32
 }
 
+func (m Htu21Measurement) String() string {
+	return fmt.Sprintf("%.1fC %.1f%", m.Temp, m.Hum)
+}
 func (m Htu21Measurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_HTU_TEMP: m.Temp,
@@ -53,6 +61,9 @@ type Scd41Measurement struct {
 	Co2       uint16
 }
 
+func (m Scd41Measurement) String() string {
+	return fmt.Sprintf("%.1fC, %.1f%, %dpm", m.Temp, m.Hum, m.Co2)
+}
 func (m Scd41Measurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_SCD_TEMP:       m.Temp,
@@ -73,6 +84,9 @@ type Sgp30Measurement struct {
 	Tvoc int32
 }
 
+func (m Sgp30Measurement) String() string {
+	return fmt.Sprintf("%dppb", m.Tvoc)
+}
 func (m *Sgp30Measurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_TVOC: m.Tvoc,
@@ -84,6 +98,10 @@ type Sgp40Measurement struct {
 	VocIndex uint32
 }
 
+func (m Sgp40Measurement) String() string {
+	return fmt.Sprintf("%d", m.VocIndex)
+}
+
 func (m *Sgp40Measurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_VOC_INDEX: m.VocIndex,
@@ -93,6 +111,10 @@ func (m *Sgp40Measurement) ToMap() map[string]any {
 /* ~~~ MPRLS ~~ */
 type MprlsMeasurement struct {
 	Pressure float32
+}
+
+func (m *MprlsMeasurement) String() string {
+	return fmt.Sprintf("%.1fkPa", m.Pressure)
 }
 
 func (m *MprlsMeasurement) ToMap() map[string]any {

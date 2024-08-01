@@ -19,6 +19,7 @@ type DuetData interface {
 	ToMap(gatewaySerial string) map[string]any
 	RecalculateLastResetUnix()
 	GetTypeInfo() DuetTypeInfo
+	String() string
 	// String() string
 }
 
@@ -165,6 +166,11 @@ type DuetDataMk4Var0 struct {
 	RadioMeta RadioMetadata
 }
 
+func (d *DuetDataMk4Var0) String() string {
+	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PT1: %s | PT2: %s | PTM: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, 4, 0, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Pt1.String(), d.Pt2.String(), d.PtM.String(),
+		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+}
 func (d *DuetDataMk4Var0) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var0
 }
@@ -365,6 +371,11 @@ type DuetDataMk4Var3 struct {
 	Co, No2, Ch4 float32
 }
 
+func (d *DuetDataMk4Var3) String() string {
+	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | Co %.2f, NO2: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, 4, 0, d.UnixSec, d.Co, d.No2, d.Ch4, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+}
 func (d *DuetDataMk4Var3) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var3
 }
@@ -525,7 +536,7 @@ func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
 	if err := d.Sps.PopulateFromBytes(buff[72:90]); err != nil {
 		return fmt.Errorf("error parsing bytes for sps30: %w", err)
 	}
-	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 
 	return nil
 }
