@@ -21,11 +21,51 @@ type DuetData interface {
 	// String() string
 }
 
-func PopulateFromSerialString(d DuetData, s string, recievedUnixSec uint32) error {
-	typeInfo := d.GetTypeInfo()
+func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, err error) {
+	splitStr = strings.Split(strings.TrimSpace(s), " ")
+	var hwVer, snsVar uint8
+	if len(splitStr) < 2 {
+		err = fmt.Errorf("values are less than 2 in length")
+		return
+	}
+	if hwVer32, cErr := strconv.ParseUint(splitStr[0], 10, 8); cErr != nil {
+		err = fmt.Errorf("error coverting to uint8: %w", cErr)
+		return
+	} else {
+		hwVer = uint8(hwVer32)
+	}
+	if snsVar32, cErr := strconv.ParseUint(splitStr[1], 10, 8); cErr != nil {
+		err = fmt.Errorf("error coverting to uint8: %w", cErr)
+		return
+	} else {
+		snsVar = uint8(snsVar32)
+	}
+	typeInfo = getTypeInfo(hwVer, snsVar)
+	if typeInfo == nil {
+		err = fmt.Errorf("failed to match recieved duet type: Mk%d.%d", hwVer, snsVar)
+	}
+	return
+}
 
+func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
+	switch hwVer {
+	case 4:
+		switch snsVar {
+		case 0:
+			ret = &DuetTypeMk4Var0
+		case 3:
+			ret = &DuetTypeMk4Var3
+		}
+	}
+	return
+}
+
+func DuetDataFromSerialString(d DuetData, s string, recievedUnixSec uint32) error {
 	/* Validate Arguments */
-	splitStr := strings.Split(strings.TrimSpace(s), " ")
+	splitStr, typeInfo, err := getVersionFromString(s)
+	if err != nil {
+		return fmt.Errorf("failed to get duet type info: %w", err)
+	}
 	if err := typeInfo.CheckSubstringLen(len(splitStr)); err != nil {
 		return err
 	}
