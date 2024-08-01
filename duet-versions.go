@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"maps"
 	"strconv"
 	"strings"
@@ -44,6 +45,7 @@ func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, 
 	if typeInfo == nil {
 		err = fmt.Errorf("failed to match recieved duet type: Mk%d.%d", hwVer, snsVar)
 	}
+	log.Printf("(%d, %d)", hwVer, snsVar)
 	return
 }
 
