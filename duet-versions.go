@@ -46,7 +46,6 @@ func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, 
 	if typeInfo == nil {
 		err = fmt.Errorf("failed to match recieved duet type: Mk%d.%d", hwVer, snsVar)
 	}
-	log.Printf("(%d, %d)", hwVer, snsVar)
 	return
 }
 
@@ -493,6 +492,7 @@ func (d *DuetDataMk4Var3) doPopulateFromSubStrings(splitStr []string) error {
 		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
 	}
 
+	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	d.Co = gasSensors.Co
 	d.Ch4 = gasSensors.Ch4
 	d.No2 = gasSensors.No2
@@ -501,7 +501,6 @@ func (d *DuetDataMk4Var3) doPopulateFromSubStrings(splitStr []string) error {
 }
 
 func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
-	log.Print("here 1")
 	d.SensorStates = buff[0]
 	d.PoeUsbVoltage = buff[1]
 	d.SerialNumber = binary.LittleEndian.Uint16(buff[2:4])
@@ -536,11 +535,7 @@ func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
 	if err := d.Sps.PopulateFromBytes(buff[72:90]); err != nil {
 		return fmt.Errorf("error parsing bytes for sps30: %w", err)
 	}
-	log.Print("here 2")
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	log.Printf("SCD: %v, HTU: %v -> %v", d.Htu, d.Scd, d.TempRh)
-	log.Printf("SCD: %s, HTU: %s -> %s", d.Htu.String(), d.Scd.String(), d.TempRh.String())
-	log.Print("here 3")
 	return nil
 }
 func (d *DuetDataMk4Var3) ToMap(gatewaySerial string) map[string]any {
