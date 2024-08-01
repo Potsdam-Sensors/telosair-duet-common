@@ -1,4 +1,4 @@
-package telosairduetcommon
+package duetcommongo
 
 import (
 	"encoding/binary"

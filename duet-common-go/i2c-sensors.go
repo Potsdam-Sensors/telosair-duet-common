@@ -1,4 +1,4 @@
-package telosairduetcommon
+package duetcommongo
 
 /* ~~ Temp & Rh ~~ */
 type TempRhMeasurement interface {

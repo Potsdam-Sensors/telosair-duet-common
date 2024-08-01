@@ -1,4 +1,4 @@
-package telosairduetcommon
+package duetcommongo
 
 type RadioMetadata struct {
 	LastSnr         int32
