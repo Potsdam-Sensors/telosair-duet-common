@@ -372,8 +372,8 @@ type DuetDataMk4Var3 struct {
 }
 
 func (d *DuetDataMk4Var3) String() string {
-	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | Co %.2f, NO2: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber, 4, 0, d.UnixSec, d.Co, d.No2, d.Ch4, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+	return fmt.Sprintf("[Duet %d, Type 4.3 | Unix %d | Co %.2f, NO2: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, d.UnixSec, d.Co, d.No2, d.Ch4, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var3) GetTypeInfo() DuetTypeInfo {
@@ -537,6 +537,8 @@ func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error parsing bytes for sps30: %w", err)
 	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
+	log.Printf("SCD: %v, HTU: %v -> %v", d.Htu, d.Scd, d.TempRh)
+	log.Printf("SCD: %s, HTU: %s -> %s", d.Htu.String(), d.Scd.String(), d.TempRh.String())
 
 	return nil
 }

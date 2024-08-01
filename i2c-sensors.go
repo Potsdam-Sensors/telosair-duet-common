@@ -14,7 +14,7 @@ type CombinedTempRhMeasurements struct {
 }
 
 func (m CombinedTempRhMeasurements) String() string {
-	return fmt.Sprintf("%.1fC, %.1f%", m.Temp, m.Hum)
+	return fmt.Sprintf("%.1fC, %.1fperc", m.Temp, m.Hum)
 }
 func (m CombinedTempRhMeasurements) Temperature() float32 {
 	return m.Temp
@@ -40,7 +40,7 @@ type Htu21Measurement struct {
 }
 
 func (m Htu21Measurement) String() string {
-	return fmt.Sprintf("%.1fC %.1f%", m.Temp, m.Hum)
+	return fmt.Sprintf("%.1fC %.1fperc", m.Temp, m.Hum)
 }
 func (m Htu21Measurement) ToMap() map[string]any {
 	return map[string]any{
@@ -62,7 +62,7 @@ type Scd41Measurement struct {
 }
 
 func (m Scd41Measurement) String() string {
-	return fmt.Sprintf("%.1fC, %.1f%, %dpm", m.Temp, m.Hum, m.Co2)
+	return fmt.Sprintf("%.1fC, %.1fperc, %dpm", m.Temp, m.Hum, m.Co2)
 }
 func (m Scd41Measurement) ToMap() map[string]any {
 	return map[string]any{
