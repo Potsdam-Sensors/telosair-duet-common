@@ -1,4 +1,4 @@
-package duetcommongo
+package common
 
 /* ~~ Temp & Rh ~~ */
 type TempRhMeasurement interface {

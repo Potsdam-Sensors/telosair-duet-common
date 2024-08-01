@@ -1,4 +1,4 @@
-package duetcommongo
+package common
 
 type RadioMetadata struct {
 	LastSnr         int32
