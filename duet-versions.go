@@ -556,6 +556,5 @@ func (d *DuetDataMk4Var3) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Sgp.ToMap())
 	maps.Copy(ret, d.RadioMeta.ToMap())
 
-	// return ret
-	return map[string]any{}
+	return ret
 }
