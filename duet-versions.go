@@ -77,7 +77,7 @@ func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error
 
 	/* Field Population */
 	// Use the string split up by separator to populate data sample fields
-	if err := d.doPopulateFromSubStrings(splitStr); err != nil {
+	if err := d.doPopulateFromSubStrings(splitStr[2:]); err != nil {
 		return nil, err
 	}
 
@@ -405,7 +405,8 @@ func (d *DuetDataMk4Var3) doPopulateFromSubStrings(splitStr []string) error {
 
 	// Sensirion SPS30
 	if err := d.Sps.FromSerialString(splitStr[2]); err != nil {
-		return fmt.Errorf("failed to convert PT0 string, %s, to PlantowerData", splitStr[3])
+		return fmt.Errorf("failed to convert Spss
+		 string, %s, to PlantowerData", splitStr[3])
 	}
 
 	// Temperatures (1 & 2)
