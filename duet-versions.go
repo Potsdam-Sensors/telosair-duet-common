@@ -405,8 +405,7 @@ func (d *DuetDataMk4Var3) doPopulateFromSubStrings(splitStr []string) error {
 
 	// Sensirion SPS30
 	if err := d.Sps.FromSerialString(splitStr[2]); err != nil {
-		return fmt.Errorf("failed to convert Spss
-		 string, %s, to PlantowerData", splitStr[3])
+		return fmt.Errorf("failed to convert Sps string, %s, to PlantowerData", splitStr[3])
 	}
 
 	// Temperatures (1 & 2)
