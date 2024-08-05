@@ -20,6 +20,19 @@ type DuetData interface {
 	// String() string
 }
 
+func getVersionFromBuffer(b []byte) (*DuetTypeInfo, error) {
+	if len(b) < 2 {
+		return nil, fmt.Errorf("values are less than 2in length")
+	}
+	hwVer := b[0]
+	snVar := b[1]
+	typeInfo := getTypeInfo(hwVer, snVar)
+	if typeInfo == nil {
+		return nil, fmt.Errorf("failed to match recieved duet type: %d.%d", hwVer, snVar)
+	}
+	return typeInfo, nil
+}
+
 func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, err error) {
 	splitStr = strings.Split(strings.TrimSpace(s), " ")
 	var hwVer, snsVar uint8
@@ -67,6 +80,32 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 		}
 	}
 	return
+}
+
+func DuetDataFromRadioBytes(buff []byte, recievedUnixSec uint32, isRadio bool) (DuetData, error) {
+	typeInfo, err := getVersionFromBuffer(buff)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get duet type info: %w", err)
+	}
+	if err := typeInfo.checkByteLen(len(buff[2:])); err != nil {
+		return nil, err
+	}
+	d := typeInfo.StructInstanceGetter()
+
+	if err := d.doPopulateFromBytes(buff[2:]); err != nil {
+		return nil, fmt.Errorf("failed to populate for type %s: %w", typeInfo.TypeAlias, err)
+	}
+
+	if isRadio {
+		d.SetConnectionType(CONNECTION_TYPE_LORA_GATEWAY)
+		d.SetTimeRadio(recievedUnixSec)
+	} else {
+		d.SetConnectionType(CONNECTION_TYPE_USB_SERIAL)
+		d.SetTimeSerial(recievedUnixSec)
+	}
+	d.RecalculateLastResetUnix()
+
+	return d, nil
 }
 
 func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error) {
