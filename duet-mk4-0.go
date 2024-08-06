@@ -5,8 +5,13 @@ import (
 	"encoding/binary"
 	"fmt"
 	"maps"
+	"math"
 	"strconv"
 )
+
+func RoundFloatTwoDecimals(val float32) float32 {
+	return float32(math.Round(float64(val*100)) / 100)
+}
 
 /* ~~ MK4 Var 0 ~~ */
 var DuetTypeMk4Var0 = DuetTypeInfo{

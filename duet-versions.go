@@ -17,7 +17,6 @@ type DuetData interface {
 	GetTypeInfo() DuetTypeInfo
 	String() string
 	SetPiMcuTemp(val float32)
-	// String() string
 }
 
 func getVersionFromBuffer(b []byte) (*DuetTypeInfo, error) {
@@ -136,31 +135,6 @@ func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error
 	return d, nil
 }
 
-func PopulateFromRadioBytes(d DuetData, buff []byte, recievedUnixSec uint32) error {
-	typeInfo := d.GetTypeInfo()
-
-	/* Validate Arguments */
-	if err := typeInfo.checkByteLen(len(buff)); err != nil {
-		return err
-	}
-
-	/* Field Population */
-	// Use the buffer to populate data sample fields
-	if err := d.doPopulateFromBytes(buff); err != nil {
-		return fmt.Errorf("error populating fields from bytes: %w", err)
-	}
-
-	// Set Radio Specific Stuff
-	if err := d.SetTimeRadio(recievedUnixSec); err != nil {
-		return err
-	}
-	d.SetConnectionType(CONNECTION_TYPE_LORA_GATEWAY)
-
-	d.RecalculateLastResetUnix()
-
-	return nil
-}
-
 type DuetTypeInfo struct {
 	ExpectedBytes        int
 	ExpectedStringLen    int
@@ -169,7 +143,7 @@ type DuetTypeInfo struct {
 }
 
 func (typeInfo DuetTypeInfo) checkByteLen(byteLen int) error {
-	if byteLen != typeInfo.ExpectedBytes {
+	if byteLen < typeInfo.ExpectedBytes {
 		return fmt.Errorf("exepcted at least %d bytes for sample, only got %d", typeInfo.ExpectedBytes, byteLen)
 	}
 	return nil
