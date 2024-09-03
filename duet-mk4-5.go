@@ -39,6 +39,9 @@ type DuetDataMk4Var5 struct {
 	Co, O3, No2 float32
 }
 
+func (d *DuetDataMk4Var5) SetRadioData(v RadioMetadata) {
+	d.RadioMeta = v
+}
 func (d *DuetDataMk4Var5) SetPiMcuTemp(val float32) {
 	d.PiMcuTemp = val
 }

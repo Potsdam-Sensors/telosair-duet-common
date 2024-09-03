@@ -17,6 +17,7 @@ type DuetData interface {
 	GetTypeInfo() DuetTypeInfo
 	String() string
 	SetPiMcuTemp(val float32)
+	SetRadioData(v RadioMetadata)
 }
 
 func getVersionFromBuffer(b []byte) (*DuetTypeInfo, error) {
