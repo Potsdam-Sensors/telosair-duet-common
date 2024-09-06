@@ -92,69 +92,65 @@ func (d *DuetDataMk4Var5) doPopulateFromSubStrings(splitStr []string) error {
 	if err := d.Sps1.FromSerialString(splitStr[2]); err != nil {
 		return fmt.Errorf("failed to convert sps30 string, %s, to PlantowerData", splitStr[3])
 	}
-	if err := d.Sps2.FromSerialString(splitStr[3]); err != nil {
-		return fmt.Errorf("failed to convert sps30 string, %s, to PlantowerData", splitStr[3])
-	}
-	if err := MergePT(&d.Sps1, &d.Sps2, &d.SpsM); err != nil {
-		return fmt.Errorf("failed to merge SPS30s: %w", err)
-	}
+	d.Sps2 = d.Sps1
+	d.SpsM = d.Sps1
 
 	// Temperatures (1 & 2)
-	if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
+	if temp, err := strconv.ParseFloat(splitStr[3], 32); err != nil {
 		return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[5])
 	} else {
 		d.Htu.Temp = float32(temp)
 	}
 
-	if temp, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
+	if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
 		return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[5])
 	} else {
 		d.Scd.Temp = float32(temp)
 	}
 
 	// Humidities (1 & 2)
-	if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
+	if hum, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
 		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[5])
 	} else {
 		d.Htu.Hum = float32(hum)
 	}
 
-	if hum, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
+	if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
 		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[5])
 	} else {
 		d.Scd.Hum = float32(hum)
 	}
 
 	// Pressure
-	if press, err := strconv.ParseFloat(splitStr[8], 32); err != nil {
+	if press, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
 		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[5])
 	} else {
 		d.Mprls.Pressure = float32(press)
 	}
 
 	// VOC Index
-	if voc, err := strconv.ParseUint(splitStr[9], 10, 32); err != nil {
+	if voc, err := strconv.ParseUint(splitStr[8], 10, 32); err != nil {
 		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[5])
 	} else {
 		d.Sgp.VocIndex = uint32(voc)
 	}
 
 	// CO2
-	if co2, err := strconv.ParseUint(splitStr[10], 10, 16); err != nil {
+	if co2, err := strconv.ParseUint(splitStr[9], 10, 16); err != nil {
 		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[5])
 	} else {
 		d.Scd.Co2 = uint16(co2)
 	}
 
 	// PoE / USB Voltage
-	if voltage, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
+	if voltage, err := strconv.ParseUint(splitStr[10], 10, 8); err != nil {
 		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[13])
 	} else {
 		d.PoeUsbVoltage = uint8(voltage)
 	}
 
 	// Sensor States
-	if sensorStates, err := strconv.ParseUint(splitStr[12], 10, 8); err != nil {
+	if sensorStates, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
 		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[14])
 	} else {
 		d.SensorStates = uint8(sensorStates)
@@ -163,13 +159,13 @@ func (d *DuetDataMk4Var5) doPopulateFromSubStrings(splitStr []string) error {
 	// Gas Sensors Enabled
 	gasSensors := GasSensorsMeasurement{}
 
-	if bitfield, err := strconv.ParseUint(splitStr[13], 10, 16); err != nil {
+	if bitfield, err := strconv.ParseUint(splitStr[12], 10, 16); err != nil {
 		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
 	} else {
 		gasSensors.SensorBitField = uint16(bitfield)
 	}
 
-	if err := gasSensors.PopulateFromString(splitStr[14]); err != nil {
+	if err := gasSensors.PopulateFromString(splitStr[13]); err != nil {
 		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
 	}
 
