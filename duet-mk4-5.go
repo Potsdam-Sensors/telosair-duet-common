@@ -11,7 +11,7 @@ import (
 /* ~~ MK4 Var 5 (Outdoor, 2 SPS30s, CO, O3, NO2) ~~ */
 var DuetTypeMk4Var5 = DuetTypeInfo{
 	ExpectedBytes:        108, // Haven't verified
-	ExpectedStringLen:    17,
+	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var5{} },
 	TypeAlias:            "Mk4.5",
 }
