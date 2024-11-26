@@ -27,6 +27,7 @@ const (
 	KEY_LAST_RESET_TIME = "lastResetTime"
 	KEY_GATEWAY_SERIAL  = "gateway_serial"
 	KEY_POE_USB_VOLTAGE = "poe_usb_voltage"
+	KEY_PI_MCU_TEMP     = "pi_mcu_temp"
 
 	CONNECTION_TYPE_LORA_GATEWAY = 0
 	CONNECTION_TYPE_LORAWAN      = 1 // TODO: is this true? Unused I think now

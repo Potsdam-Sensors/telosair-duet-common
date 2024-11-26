@@ -25,6 +25,7 @@ type DuetDataMk4Var2 struct {
 	PoeUsbVoltage  uint8
 	ConnectionType int
 	PiMcuTemp      float32
+	piMcuTempSet   bool
 
 	Pt1       Pms5003Measurement
 	Pt2       Pms5003Measurement
@@ -42,6 +43,7 @@ func (d *DuetDataMk4Var2) SetRadioData(v RadioMetadata) {
 }
 func (d *DuetDataMk4Var2) SetPiMcuTemp(val float32) {
 	d.PiMcuTemp = val
+	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var2) String() string {
 	return fmt.Sprintf("[Duet %d, Type 4.2 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PT1: %s | PT2: %s | PTM: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
@@ -218,6 +220,9 @@ func (d *DuetDataMk4Var2) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Mprls.ToMap())
 	maps.Copy(ret, d.Sgp.ToMap())
 	maps.Copy(ret, d.RadioMeta.ToMap())
+	if d.piMcuTempSet {
+		ret[KEY_PI_MCU_TEMP] = d.PiMcuTemp
+	}
 
 	return ret
 }
