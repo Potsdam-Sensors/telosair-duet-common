@@ -206,6 +206,9 @@ func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
 	if err := gasSensors.PopulateFromBytes(buff[34:70]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
+	d.Co = gasSensors.Co
+	d.Ch4 = gasSensors.Ch4
+	d.No2 = gasSensors.No2
 
 	if err := d.Sps.PopulateFromBytes(buff[72:90]); err != nil {
 		return fmt.Errorf("error parsing bytes for sps30: %w", err)

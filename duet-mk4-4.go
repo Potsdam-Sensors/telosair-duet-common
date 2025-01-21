@@ -225,6 +225,9 @@ func (d *DuetDataMk4Var4) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("failed to merge pt: %w", err)
 	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
+	d.Co = gasSensors.Co
+	d.O3 = gasSensors.O3
+	d.No2 = gasSensors.No2
 	return nil
 }
 func (d *DuetDataMk4Var4) ToMap(gatewaySerial string) map[string]any {
