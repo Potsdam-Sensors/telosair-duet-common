@@ -49,6 +49,12 @@ func (m *GasSensorsMeasurement) PopulateFromBytes(buff []byte) error {
 	if n := len(buff); n != NUM_GAS_SENSORS*4 {
 		return fmt.Errorf("expected %d bytes for gas sensors, got %d", NUM_GAS_SENSORS*4, n)
 	}
+	println("*GasSensorsMeasurement.PopulateFromBytes()")
+	for idx, label := range []string{"CO", "O3", "NH3", "NO2", "SO2", "CH2O", "VOC", "CH4"} {
+		bitset := checkBitSet(m.SensorBitField, uint16(1)<<idx)
+		fmt.Printf("\t%s\t-\t%v\r\n", label, bitset)
+	}
+
 	floats := make([]float32, NUM_GAS_SENSORS)
 	reader := bytes.NewReader(buff)
 	for i := 0; i < 9; i++ {
@@ -58,6 +64,7 @@ func (m *GasSensorsMeasurement) PopulateFromBytes(buff []byte) error {
 		}
 		floats[i] = gasVal
 	}
+	fmt.Printf("%v\r\n", floats)
 	return m.PopulateFromPrimitive(floats)
 }
 
