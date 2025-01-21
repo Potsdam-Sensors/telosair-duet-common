@@ -198,9 +198,11 @@ func (d *DuetDataMk4Var6) doPopulateFromBytes(buff []byte) error {
 	gasSensors := GasSensorsMeasurement{
 		SensorBitField: binary.LittleEndian.Uint16(buff[70:72]),
 	}
+	println("About to populate gas sensors from bytes")
 	if err := gasSensors.PopulateFromBytes(buff[34:70]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
+	println("Populated probably")
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	return nil
