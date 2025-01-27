@@ -29,6 +29,16 @@ func (m CombinedTempRhMeasurements) ToMap() map[string]any {
 	}
 }
 
+func (m CombinedTempRhMeasurements) DirectoryName() string {
+	return "combined_temp_rh"
+}
+func (m CombinedTempRhMeasurements) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"temperature": m.Temp,
+		"humidity":    m.Hum,
+	}
+}
+
 func CombineTempRhMeasurements(m1 TempRhMeasurement, m2 TempRhMeasurement, m3 *CombinedTempRhMeasurements) {
 	m3.Temp = (m1.Temperature() + m2.Temperature()) / 2
 	m3.Hum = (m1.Humidity() + m2.Humidity()) / 2
@@ -53,6 +63,15 @@ func (m Htu21Measurement) Temperature() float32 {
 }
 func (m Htu21Measurement) Humidity() float32 {
 	return m.Hum
+}
+func (m Htu21Measurement) DirectoryName() string {
+	return "htu21df"
+}
+func (m Htu21Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"temperature": m.Temp,
+		"humidity":    m.Hum,
+	}
 }
 
 /* ~~ SCD 41 ~~ */
@@ -79,6 +98,18 @@ func (m Scd41Measurement) Humidity() float32 {
 	return m.Hum
 }
 
+func (m Scd41Measurement) DirectoryName() string {
+	return "scd41"
+}
+
+func (m *Scd41Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"temperature": m.Temp,
+		"humidity":    m.Hum,
+		"co2":         float32(m.Co2),
+	}
+}
+
 /* ~~ SG30 ~~ */
 type Sgp30Measurement struct {
 	Tvoc int32
@@ -90,6 +121,15 @@ func (m Sgp30Measurement) String() string {
 func (m *Sgp30Measurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_TVOC: m.Tvoc,
+	}
+}
+func (m Sgp30Measurement) DirectoryName() string {
+	return "sgp30"
+}
+
+func (m Sgp30Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"tvoc": float32(m.Tvoc),
 	}
 }
 
@@ -108,6 +148,15 @@ func (m *Sgp40Measurement) ToMap() map[string]any {
 	}
 }
 
+func (m Sgp40Measurement) DirectoryName() string {
+	return "sgp40"
+}
+func (m Sgp40Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"voc_index": float32(m.VocIndex),
+	}
+}
+
 /* ~~~ MPRLS ~~ */
 type MprlsMeasurement struct {
 	Pressure float32
@@ -120,5 +169,15 @@ func (m *MprlsMeasurement) String() string {
 func (m *MprlsMeasurement) ToMap() map[string]any {
 	return map[string]any{
 		KEY_MPRLS_PRESSURE: m.Pressure,
+	}
+}
+
+func (m MprlsMeasurement) DirectoryName() string {
+	return "mprls"
+}
+
+func (m MprlsMeasurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"pressure": m.Pressure,
 	}
 }
