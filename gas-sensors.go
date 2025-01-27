@@ -109,3 +109,43 @@ func (m GasSensorsMeasurement) ToMap() map[string]any {
 	}
 	return retMap
 }
+
+func (m GasSensorsMeasurement) FloatMap() map[string]float32 {
+	var retMap = map[string]float32{}
+	if checkBitSet(m.SensorBitField, 1) {
+		retMap[KEY_GAS_CO] = m.Co
+	}
+	if checkBitSet(m.SensorBitField, 2) {
+		retMap[KEY_GAS_O3] = m.O3
+	}
+	if checkBitSet(m.SensorBitField, 4) {
+		retMap[KEY_GAS_NH3] = m.Nh3
+	}
+	if checkBitSet(m.SensorBitField, 8) {
+		retMap[KEY_GAS_NO] = m.No
+	}
+	if checkBitSet(m.SensorBitField, 16) {
+		retMap[KEY_GAS_NO2] = m.No2
+	}
+	if checkBitSet(m.SensorBitField, 32) {
+		retMap[KEY_GAS_SO2] = m.So2
+	}
+	if checkBitSet(m.SensorBitField, 64) {
+		retMap[KEY_GAS_CH2O] = m.Ch2o
+	}
+	if checkBitSet(m.SensorBitField, 128) {
+		retMap[KEY_GAS_VOC] = m.Voc
+	}
+	if checkBitSet(m.SensorBitField, 256) {
+		retMap[KEY_GAS_CH4] = m.Ch4
+	}
+	return retMap
+}
+
+func (m GasSensorsMeasurement) DirectoryName() string {
+	return "gas"
+}
+
+func (m GasSensorsMeasurement) DirectoryData() map[string]float32 {
+	return m.FloatMap()
+}

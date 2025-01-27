@@ -34,9 +34,13 @@ type DuetDataMk4Var6 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
+	Gas              GasSensorsMeasurement
 	Co, O3, No2, So2 float32
 }
 
+func (d *DuetDataMk4Var6) SensorMeasurements() []SensorMeasurement {
+	return []SensorMeasurement{d.TempRh, d.Scd, d.Mprls, d.Sgp, &d.Gas}
+}
 func (d *DuetDataMk4Var6) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
 }
@@ -149,23 +153,21 @@ func (d *DuetDataMk4Var6) doPopulateFromSubStrings(splitStr []string) error {
 	}
 
 	// Gas Sensors Enabled
-	gasSensors := GasSensorsMeasurement{}
-
 	if bitfield, err := strconv.ParseUint(splitStr[11], 10, 16); err != nil {
 		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
 	} else {
-		gasSensors.SensorBitField = uint16(bitfield)
+		d.Gas.SensorBitField = uint16(bitfield)
 	}
 
-	if err := gasSensors.PopulateFromString(splitStr[12]); err != nil {
+	if err := d.Gas.PopulateFromString(splitStr[12]); err != nil {
 		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
 	}
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = gasSensors.Co
-	d.O3 = gasSensors.O3
-	d.No2 = gasSensors.No2
-	d.So2 = gasSensors.So2
+	d.Co = d.Gas.Co
+	d.O3 = d.Gas.O3
+	d.No2 = d.Gas.No2
+	d.So2 = d.Gas.So2
 
 	return nil
 }
@@ -195,16 +197,14 @@ func (d *DuetDataMk4Var6) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
 
-	gasSensors := GasSensorsMeasurement{
-		SensorBitField: binary.LittleEndian.Uint16(buff[70:72]),
-	}
-	if err := gasSensors.PopulateFromBytes(buff[34:70]); err != nil {
+	d.Gas.SensorBitField = binary.LittleEndian.Uint16(buff[70:72])
+	if err := d.Gas.PopulateFromBytes(buff[34:70]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
-	d.Co = gasSensors.Co
-	d.No2 = gasSensors.No2
-	d.O3 = gasSensors.O3
-	d.So2 = gasSensors.So2
+	d.Co = d.Gas.Co
+	d.No2 = d.Gas.No2
+	d.O3 = d.Gas.O3
+	d.So2 = d.Gas.So2
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	return nil

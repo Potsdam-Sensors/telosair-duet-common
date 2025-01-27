@@ -38,6 +38,10 @@ type DuetDataMk4Var2 struct {
 	RadioMeta RadioMetadata
 }
 
+func (d *DuetDataMk4Var2) SensorMeasurements() []SensorMeasurement {
+	return []SensorMeasurement{d.PtM, d.TempRh, d.Scd, d.Mprls, d.Sgp}
+}
+
 func (d *DuetDataMk4Var2) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
 }

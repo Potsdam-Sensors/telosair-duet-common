@@ -162,3 +162,21 @@ func (p *Pms5003Measurement) FromSerialString(s string) error {
 
 	return nil
 }
+
+func (p Pms5003Measurement) DirectoryName() string {
+	return "pms5003"
+}
+func (m Pms5003Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"pm1":   float32(m.PM1),
+		"pm2p5": float32(m.PM2p5),
+		"pm10":  float32(m.PM10),
+
+		"pn0p3": float32(m.PN0p3),
+		"pn0p5": float32(m.PN0p5),
+		"pn1":   float32(m.PN1),
+		"pn2p5": float32(m.PN2p5),
+		"pn5":   float32(m.PN5),
+		"pn10":  float32(m.PN10),
+	}
+}

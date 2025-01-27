@@ -102,7 +102,7 @@ func (m Scd41Measurement) DirectoryName() string {
 	return "scd41"
 }
 
-func (m *Scd41Measurement) DirectoryData() map[string]float32 {
+func (m Scd41Measurement) DirectoryData() map[string]float32 {
 	return map[string]float32{
 		"temperature": m.Temp,
 		"humidity":    m.Hum,

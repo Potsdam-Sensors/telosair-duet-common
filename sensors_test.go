@@ -14,5 +14,7 @@ func TestSensorsImplementSensor(t *testing.T) {
 	var _ SensorMeasurement = &Sgp30Measurement{}
 	var _ SensorMeasurement = &Sgp40Measurement{}
 	var _ SensorMeasurement = &MprlsMeasurement{}
+	var _ SensorMeasurement = &Pms5003Measurement{}
+	var _ SensorMeasurement = &GasSensorsMeasurement{}
 
 }

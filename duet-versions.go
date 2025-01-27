@@ -18,6 +18,7 @@ type DuetData interface {
 	String() string
 	SetPiMcuTemp(val float32)
 	SetRadioData(v RadioMetadata)
+	SensorMeasurements() []SensorMeasurement
 }
 
 func getVersionFromBuffer(b []byte) (*DuetTypeInfo, error) {
@@ -154,6 +155,15 @@ func (typeInfo DuetTypeInfo) checkByteLen(byteLen int) error {
 func (typeInfo DuetTypeInfo) checkSubstringLen(n int) error {
 	if n != typeInfo.ExpectedStringLen {
 		return fmt.Errorf("expected a list of values at least %d in length, only got %d", typeInfo.ExpectedStringLen, n)
+	}
+	return nil
+}
+
+func WriteDuetDataToDir(d DuetData, dir string) error {
+	for _, m := range d.SensorMeasurements() {
+		if err := StoreSensorData(m, dir); err != nil {
+			return err
+		}
 	}
 	return nil
 }

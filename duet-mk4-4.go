@@ -37,9 +37,13 @@ type DuetDataMk4Var4 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
+	Gas         GasSensorsMeasurement
 	Co, O3, No2 float32
 }
 
+func (d *DuetDataMk4Var4) SensorMeasurements() []SensorMeasurement {
+	return []SensorMeasurement{d.PtM, d.TempRh, d.Scd, d.Mprls, d.Sgp, &d.Gas}
+}
 func (d *DuetDataMk4Var4) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
 }
@@ -162,23 +166,21 @@ func (d *DuetDataMk4Var4) doPopulateFromSubStrings(splitStr []string) error {
 		d.SensorStates = uint8(sensorStates)
 	}
 
-	// Gas Sensors Enabled
-	gasSensors := GasSensorsMeasurement{}
-
+	// Gas Sensors Enable
 	if bitfield, err := strconv.ParseUint(splitStr[13], 10, 16); err != nil {
 		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
 	} else {
-		gasSensors.SensorBitField = uint16(bitfield)
+		d.Gas.SensorBitField = uint16(bitfield)
 	}
 
-	if err := gasSensors.PopulateFromString(splitStr[14]); err != nil {
+	if err := d.Gas.PopulateFromString(splitStr[14]); err != nil {
 		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
 	}
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = gasSensors.Co
-	d.O3 = gasSensors.O3
-	d.No2 = gasSensors.No2
+	d.Co = d.Gas.Co
+	d.O3 = d.Gas.O3
+	d.No2 = d.Gas.No2
 
 	return nil
 }
@@ -208,10 +210,8 @@ func (d *DuetDataMk4Var4) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
 
-	gasSensors := GasSensorsMeasurement{
-		SensorBitField: binary.LittleEndian.Uint16(buff[70:72]),
-	}
-	if err := gasSensors.PopulateFromBytes(buff[34:70]); err != nil {
+	d.Gas.SensorBitField = binary.LittleEndian.Uint16(buff[70:72])
+	if err := d.Gas.PopulateFromBytes(buff[34:70]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
 
@@ -225,9 +225,9 @@ func (d *DuetDataMk4Var4) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("failed to merge pt: %w", err)
 	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = gasSensors.Co
-	d.O3 = gasSensors.O3
-	d.No2 = gasSensors.No2
+	d.Co = d.Gas.Co
+	d.O3 = d.Gas.O3
+	d.No2 = d.Gas.No2
 	return nil
 }
 func (d *DuetDataMk4Var4) ToMap(gatewaySerial string) map[string]any {

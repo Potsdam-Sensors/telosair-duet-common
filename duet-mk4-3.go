@@ -35,9 +35,13 @@ type DuetDataMk4Var3 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
+	Gas          GasSensorsMeasurement
 	Co, No2, Ch4 float32
 }
 
+func (d *DuetDataMk4Var3) SensorMeasurements() []SensorMeasurement {
+	return []SensorMeasurement{d.Sps, d.TempRh, d.Scd, d.Mprls, d.Sgp, &d.Gas}
+}
 func (d *DuetDataMk4Var3) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
 }
@@ -155,22 +159,20 @@ func (d *DuetDataMk4Var3) doPopulateFromSubStrings(splitStr []string) error {
 	}
 
 	// Gas Sensors Enabled
-	gasSensors := GasSensorsMeasurement{}
-
 	if bitfield, err := strconv.ParseUint(splitStr[12], 10, 16); err != nil {
 		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
 	} else {
-		gasSensors.SensorBitField = uint16(bitfield)
+		d.Gas.SensorBitField = uint16(bitfield)
 	}
 
-	if err := gasSensors.PopulateFromString(splitStr[13]); err != nil {
+	if err := d.Gas.PopulateFromString(splitStr[13]); err != nil {
 		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
 	}
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = gasSensors.Co
-	d.Ch4 = gasSensors.Ch4
-	d.No2 = gasSensors.No2
+	d.Co = d.Gas.Co
+	d.Ch4 = d.Gas.Ch4
+	d.No2 = d.Gas.No2
 
 	return nil
 }
@@ -200,15 +202,15 @@ func (d *DuetDataMk4Var3) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
 
-	gasSensors := GasSensorsMeasurement{
+	d.Gas = GasSensorsMeasurement{
 		SensorBitField: binary.LittleEndian.Uint16(buff[70:72]),
 	}
-	if err := gasSensors.PopulateFromBytes(buff[34:70]); err != nil {
+	if err := d.Gas.PopulateFromBytes(buff[34:70]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
-	d.Co = gasSensors.Co
-	d.Ch4 = gasSensors.Ch4
-	d.No2 = gasSensors.No2
+	d.Co = d.Gas.Co
+	d.Ch4 = d.Gas.Ch4
+	d.No2 = d.Gas.No2
 
 	if err := d.Sps.PopulateFromBytes(buff[72:90]); err != nil {
 		return fmt.Errorf("error parsing bytes for sps30: %w", err)
