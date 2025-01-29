@@ -39,7 +39,7 @@ type DuetDataMk4Var1 struct {
 }
 
 func (d *DuetDataMk4Var1) SensorMeasurements() []SensorMeasurement {
-	return []SensorMeasurement{d.SpsM, d.TempRh, d.Scd, d.Mprls, d.Sgp}
+	return []SensorMeasurement{d.SpsM, d.TempRh, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
 }
 
 func (d *DuetDataMk4Var1) SetRadioData(v RadioMetadata) {
