@@ -10,7 +10,7 @@ func TestDuetsImplementDuetData(t *testing.T) {
 	for _, _ = range []DuetData{
 		&DuetDataMk4Var0{}, &DuetDataMk4Var1{}, &DuetDataMk4Var2{}, &DuetDataMk4Var3{},
 		&DuetDataMk4Var4{}, &DuetDataMk4Var5{}, &DuetDataMk4Var6{}, &DuetDataMk4Var7{},
-		&DuetDataMk4Var8{},
+		&DuetDataMk4Var8{}, &DuetDataMk4Var9{},
 	} {
 	}
 
@@ -83,6 +83,7 @@ func TestDuetTypeMethods(t *testing.T) {
 		{&DuetTypeMk4Var6, "Mk4.6", &DuetDataMk4Var6{}},
 		{&DuetTypeMk4Var7, "Mk4.7", &DuetDataMk4Var7{}},
 		{&DuetTypeMk4Var8, "Mk4.8", &DuetDataMk4Var8{}},
+		{&DuetTypeMk4Var9, "Mk4.9", &DuetDataMk4Var9{}},
 	} {
 		if err := testDuetType(testData); err != nil {
 			t.Error(err)
