@@ -44,6 +44,34 @@ func CombineTempRhMeasurements(m1 TempRhMeasurement, m2 TempRhMeasurement, m3 *C
 	m3.Hum = (m1.Humidity() + m2.Humidity()) / 2
 }
 
+/* ~~ Si7021 ~~ */
+type Si7021Measurement struct {
+	Temp, Hum float32
+}
+
+func (m Si7021Measurement) String() string {
+	return fmt.Sprintf("%.1fC %.1fperc", m.Temp, m.Hum)
+}
+
+// TODO: Using the general temp/hum for key is not consistent
+func (m Si7021Measurement) ToMap() map[string]any {
+	return map[string]any{
+		KEY_TEMP: m.Temp,
+		KEY_HUM:  m.Hum,
+	}
+}
+
+func (m Si7021Measurement) DirectoryName() string {
+	return "si7021"
+}
+
+func (m Si7021Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"temperature": m.Temp,
+		"humidity":    m.Hum,
+	}
+}
+
 /* ~~ HTU ~~ */
 type Htu21Measurement struct {
 	Temp, Hum float32
@@ -110,7 +138,31 @@ func (m Scd41Measurement) DirectoryData() map[string]float32 {
 	}
 }
 
-/* ~~ SG30 ~~ */
+/* ~~ Plantower CO2 ~~ */
+type PlantowerCo2Measurement struct {
+	Co2 uint16
+}
+
+func (m PlantowerCo2Measurement) String() string {
+	return fmt.Sprintf("%dppm", m.Co2)
+}
+func (m PlantowerCo2Measurement) ToMap() map[string]any {
+	return map[string]any{
+		KEY_SCD_CO2:        m.Co2,
+		KEY_SCD_CO2_LEGACY: m.Co2,
+	}
+}
+func (m PlantowerCo2Measurement) DirectoryName() string {
+	return "plantower_co2"
+}
+
+func (m PlantowerCo2Measurement) DirectoryData() map[string]float32 {
+	return map[string]float32{
+		"co2": float32(m.Co2),
+	}
+}
+
+/* ~~ SGP30 ~~ */
 type Sgp30Measurement struct {
 	Tvoc int32
 }

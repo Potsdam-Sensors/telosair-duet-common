@@ -62,6 +62,11 @@ func getVersionFromString(s string) (splitStr []string, typeInfo *DuetTypeInfo, 
 
 func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 	switch hwVer {
+	case 1:
+		switch snsVar {
+		case 0:
+			ret = &DuetTypeMk1Var0
+		}
 	case 4:
 		switch snsVar {
 		case 0:
