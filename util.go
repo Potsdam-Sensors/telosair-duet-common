@@ -29,6 +29,9 @@ const (
 	KEY_POE_USB_VOLTAGE = "poe_usb_voltage"
 	KEY_PI_MCU_TEMP     = "pi_mcu_temp"
 
+	KEY_TGS2611_RS = "tgs2611_rs"
+	KEY_TGS2600_RS = "tgs2600_rs"
+
 	CONNECTION_TYPE_LORA_GATEWAY = 0
 	CONNECTION_TYPE_LORAWAN      = 1 // TODO: is this true? Unused I think now
 	CONNECTION_TYPE_USB_SERIAL   = 2
