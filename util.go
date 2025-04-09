@@ -28,6 +28,8 @@ const (
 	KEY_GATEWAY_SERIAL  = "gateway_serial"
 	KEY_POE_USB_VOLTAGE = "poe_usb_voltage"
 	KEY_PI_MCU_TEMP     = "pi_mcu_temp"
+	KEY_LATITUDE        = "lat"
+	KEY_LONGITUDE       = "lon"
 
 	KEY_TGS2611_RS = "tgs2611_rs"
 	KEY_TGS2600_RS = "tgs2600_rs"

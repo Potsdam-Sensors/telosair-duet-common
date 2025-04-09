@@ -11,7 +11,7 @@ func TestDuetsImplementDuetData(t *testing.T) {
 		&DuetDataMk1Var0{},
 		&DuetDataMk4Var0{}, &DuetDataMk4Var1{}, &DuetDataMk4Var2{}, &DuetDataMk4Var3{},
 		&DuetDataMk4Var4{}, &DuetDataMk4Var5{}, &DuetDataMk4Var6{}, &DuetDataMk4Var7{},
-		&DuetDataMk4Var8{}, &DuetDataMk4Var9{},
+		&DuetDataMk4Var8{}, &DuetDataMk4Var9{}, &DuetDataMk4Var10{}, &DuetDataMk4Var12{},
 	} {
 	}
 
@@ -98,6 +98,8 @@ func TestDuetTypeMethods(t *testing.T) {
 		{&DuetTypeMk4Var7, "Mk4.7", &DuetDataMk4Var7{}},
 		{&DuetTypeMk4Var8, "Mk4.8", &DuetDataMk4Var8{}},
 		{&DuetTypeMk4Var9, "Mk4.9", &DuetDataMk4Var9{}},
+		{&DuetTypeMk4Var10, "Mk4.10", &DuetDataMk4Var10{}},
+		{&DuetTypeMk4Var12, "Mk4.12", &DuetDataMk4Var12{}},
 	} {
 		if err := testDuetType(testData); err != nil {
 			t.Error(err)
