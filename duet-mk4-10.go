@@ -52,7 +52,7 @@ func (d *DuetDataMk4Var10) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var10) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.3 | Unix %d | Co %.2f, NO2: %.2f | TGS %.3f & .%3f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+	return fmt.Sprintf("[Duet %d, Type 4.10 | Unix %d | Co %.2f, NO2: %.2f | TGS %.3f & %.3f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
 		d.SerialNumber, d.UnixSec, d.Co, d.No2, d.Tgs2611_Rs, d.Tgs2600_Rs, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
