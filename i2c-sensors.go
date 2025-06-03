@@ -109,7 +109,7 @@ type Scd41Measurement struct {
 }
 
 func (m Scd41Measurement) String() string {
-	return fmt.Sprintf("%.1fC, %.1fperc, %dpm", m.Temp, m.Hum, m.Co2)
+	return fmt.Sprintf("%.1fC, %.1fperc, %dppm", m.Temp, m.Hum, m.Co2)
 }
 func (m Scd41Measurement) ToMap() map[string]any {
 	return map[string]any{
