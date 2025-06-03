@@ -66,6 +66,13 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 		switch snsVar {
 		case 0:
 			ret = &DuetTypeMk1Var0
+		case 2:
+			ret = &DuetTypeMk1Var2
+		}
+	case 3:
+		switch snsVar {
+		case 1:
+			ret = &DuetTypeMk3Var1
 		}
 	case 4:
 		switch snsVar {

@@ -5,10 +5,15 @@ import (
 	"testing"
 )
 
+/*
+This test just checks that all the DuetData types implement the DuetData interface.
+This does not even really need to run as the compiler will check this at compile time.
+*/
 func TestDuetsImplementDuetData(t *testing.T) {
 	// Compile-time checks:
 	for _, _ = range []DuetData{
-		&DuetDataMk1Var0{},
+		&DuetDataMk1Var0{}, &DuetDataMk1Var2{},
+		&DuetDataMk3Var1{},
 		&DuetDataMk4Var0{}, &DuetDataMk4Var1{}, &DuetDataMk4Var2{}, &DuetDataMk4Var3{},
 		&DuetDataMk4Var4{}, &DuetDataMk4Var5{}, &DuetDataMk4Var6{}, &DuetDataMk4Var7{},
 		&DuetDataMk4Var8{}, &DuetDataMk4Var9{}, &DuetDataMk4Var10{}, &DuetDataMk4Var12{},
@@ -17,8 +22,15 @@ func TestDuetsImplementDuetData(t *testing.T) {
 
 }
 
+/*
+This test checks that the `getTypeInfo` function returns the correct DuetTypeInfo
+for the given hardware version and sensor variation.
+It also checks that it returns `nil` for invalid combinations.
+*/
 func TestGetTypeInfo(t *testing.T) {
 	// Test cases that should all return an actual Duet Type
+
+	/* MK4 */
 	for varNum, duetTypeInstance := range []*DuetTypeInfo{
 		&DuetTypeMk4Var0, &DuetTypeMk4Var1, &DuetTypeMk4Var2, &DuetTypeMk4Var3,
 		&DuetTypeMk4Var4, &DuetTypeMk4Var5, &DuetTypeMk4Var6, &DuetTypeMk4Var7,
@@ -33,9 +45,14 @@ func TestGetTypeInfo(t *testing.T) {
 			t.Errorf("expected to get duet type `%s` for Mk4.%d, got `%s` instead", duetTypeInstance.TypeAlias, uint8(varNum), resultDuetType.TypeAlias)
 		}
 	}
+
+	/* MK1 */
 	for varNum, duetTypeInstance := range []*DuetTypeInfo{
-		&DuetTypeMk1Var0,
+		&DuetTypeMk1Var0, nil, &DuetTypeMk1Var2,
 	} {
+		if duetTypeInstance == nil { // Just because Mk1.1 is not implemented, we skip it
+			continue
+		}
 		resultDuetType := getTypeInfo(1, uint8(varNum))
 		if resultDuetType == nil {
 			t.Errorf("nil for `getTypeInfo(4, %d)", uint8(varNum))
@@ -43,6 +60,22 @@ func TestGetTypeInfo(t *testing.T) {
 
 		if resultDuetType != duetTypeInstance {
 			t.Errorf("expected to get duet type `%s` for Mk4.%d, got `%s` instead", duetTypeInstance.TypeAlias, uint8(varNum), resultDuetType.TypeAlias)
+		}
+	}
+
+	/* MK3 */
+	for varNum, duetTypeInstatnce := range []*DuetTypeInfo{
+		nil, &DuetTypeMk3Var1,
+	} {
+		if duetTypeInstatnce == nil { // Just because Mk3.0 is not implemented, we skip it
+			continue
+		}
+		resultDuetType := getTypeInfo(3, uint8(varNum))
+		if resultDuetType == nil {
+			t.Errorf("nil for `getTypeInfo(3, %d)", uint8(varNum))
+		}
+		if resultDuetType != duetTypeInstatnce {
+			t.Errorf("expected to get duet type `%s` for Mk3.%d, got `%s` instead", duetTypeInstatnce.TypeAlias, uint8(varNum), resultDuetType.TypeAlias)
 		}
 	}
 
@@ -88,6 +121,8 @@ func TestDuetTypeMethods(t *testing.T) {
 
 	for _, testData := range []testData{
 		{&DuetTypeMk1Var0, "Mk1.0", &DuetDataMk1Var0{}},
+		{&DuetTypeMk1Var2, "Mk1.2", &DuetDataMk1Var2{}},
+		{&DuetTypeMk3Var1, "Mk3.1", &DuetDataMk3Var1{}},
 		{&DuetTypeMk4Var0, "Mk4.0", &DuetDataMk4Var0{}},
 		{&DuetTypeMk4Var1, "Mk4.1", &DuetDataMk4Var1{}},
 		{&DuetTypeMk4Var2, "Mk4.2", &DuetDataMk4Var2{}},
@@ -115,6 +150,8 @@ func TestDuetMethodsSimple(t *testing.T) {
 
 	for _, testData := range []TestData{
 		{&DuetDataMk1Var0{}, 1.0},
+		{&DuetDataMk1Var2{}, 1.2},
+		{&DuetDataMk3Var1{}, 3.1},
 		{&DuetDataMk4Var0{}, 4.0},
 		{&DuetDataMk4Var1{}, 4.1},
 		{&DuetDataMk4Var2{}, 4.2},
