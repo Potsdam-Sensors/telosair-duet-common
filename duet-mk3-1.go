@@ -47,13 +47,14 @@ type DuetDataMk3Var1 struct {
 
 	Htu       Htu21Measurement
 	Scd       Scd41Measurement
+	TempRh    CombinedTempRhMeasurements
 	Mprls     MprlsMeasurement
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 }
 
 func (d *DuetDataMk3Var1) SensorMeasurements() []SensorMeasurement {
-	return []SensorMeasurement{d.Sps, d.Htu, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
+	return []SensorMeasurement{d.Sps, d.Htu, d.Scd, d.TempRh, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
 }
 
 func (d *DuetDataMk3Var1) SetRadioData(v RadioMetadata) {
@@ -64,8 +65,8 @@ func (d *DuetDataMk3Var1) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk3Var1) String() string {
-	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | HTU %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30: %s | Radio: %s | Errstate %d ]",
-		d.SerialNumber, 3, 1, d.UnixSec, d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | HTU %s | SCD: %s | TempRH: %s | MPRLS: %s | SGP: %s | SPS30: %s | Radio: %s | Errstate %d ]",
+		d.SerialNumber, 3, 1, d.UnixSec, d.Htu.String(), d.Scd.String(), d.TempRh, d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
 		d.RadioMeta.String(), d.SensorStates)
 }
 func (d *DuetDataMk3Var1) GetTypeInfo() DuetTypeInfo {
@@ -166,6 +167,7 @@ func (d *DuetDataMk3Var1) doPopulateFromSubStrings(splitStr []string) error {
 	} else {
 		d.SensorStates = uint8(sensorStates)
 	}
+	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 
 	return nil
 }
@@ -198,7 +200,7 @@ func (d *DuetDataMk3Var1) doPopulateFromBytes(buff []byte) error {
 	if err := d.Sps.PopulateFromBytes(buff[34:52]); err != nil {
 		return fmt.Errorf("error parsing bytes for PT: %w", err)
 	}
-
+	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 	return nil
 }
 func (d *DuetDataMk3Var1) ToMap(gatewaySerial string) map[string]any {
@@ -219,6 +221,7 @@ func (d *DuetDataMk3Var1) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Sps.ToMap("_m"))
 	maps.Copy(ret, d.Htu.ToMap())
 	maps.Copy(ret, d.Scd.ToMap())
+	maps.Copy(ret, d.TempRh.ToMap())
 	maps.Copy(ret, d.Mprls.ToMap())
 	maps.Copy(ret, d.Sgp.ToMap())
 	maps.Copy(ret, d.RadioMeta.ToMap())
