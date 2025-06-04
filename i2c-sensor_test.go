@@ -1,7 +1,6 @@
 package telosairduetcommon
 
 import (
-	"log"
 	"testing"
 )
 
@@ -20,7 +19,6 @@ func TestCombineTempRhMeasurements(t *testing.T) {
 		Hum:  25,
 	}
 	CombineTempRhMeasurements(m1, m2, &m3)
-	log.Print(m3)
 
 	if m3 != expected {
 		t.Errorf(" = %v; want %v", m3, expected)
