@@ -100,6 +100,8 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 			ret = &DuetTypeMk4Var10
 		case 12:
 			ret = &DuetTypeMk4Var12
+		case 15:
+			ret = &DuetTypeMk4Var15
 		}
 	}
 	return
