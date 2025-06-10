@@ -22,6 +22,7 @@ const (
 	KEY_GAS_CH2O = "ch2o"
 	KEY_GAS_VOC  = "voc"
 	KEY_GAS_CH4  = "ch4"
+	KEY_GAS_H2S  = "h2s"
 )
 
 type GasSensorsMeasurement struct {
