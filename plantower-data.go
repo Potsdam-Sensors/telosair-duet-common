@@ -95,6 +95,10 @@ func (m *Pms5003Measurement) PopulateFromBytes(buff []byte) error {
 	return nil
 }
 
+func (p *Pms5003Measurement) PointerIterable() [9]*uint16 {
+	return [9]*uint16{&p.PM1, &p.PM2p5, &p.PM10, &p.PN0p3, &p.PN0p5, &p.PN1, &p.PN2p5, &p.PN5, &p.PN10}
+}
+
 func (p *Pms5003Measurement) FromSerialString(s string) error {
 	// Convert the string into a slice of strings of numbers
 	splitStr := strings.Split(strings.Trim(s, "[]"), ",")
