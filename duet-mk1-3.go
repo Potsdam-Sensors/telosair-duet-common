@@ -190,7 +190,7 @@ func (d *DuetDataMk1Var3) doPopulateFromBytes(buff []byte) error {
 	pointers := append(
 		[]any{&d.SensorStates, &toss, &d.SerialNumber, &d.Scd.Co2, &d.Sgp30.Tvoc, &d.Sgp40.VocIndex, &d.SampleTimeMs,
 			&d.Si.Temp, &d.Scd.Temp, &d.Si.Hum, &d.Scd.Hum, &d.Mprls.Pressure},
-		d.Sps.PointerIterable(),
+		[]any(d.Sps.PointerIterable())...,
 	)
 
 	for idx := range pointers {
