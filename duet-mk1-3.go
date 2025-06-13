@@ -187,18 +187,16 @@ func (d *DuetDataMk1Var3) doPopulateFromSubStrings(splitStr []string) error {
 func (d *DuetDataMk1Var3) doPopulateFromBytes(buff []byte) error {
 	reader := bytes.NewReader(buff)
 	var toss uint8
-	idx := 0
 	pointers := append(
 		[]any{&d.SensorStates, &toss, &d.SerialNumber, &d.Scd.Co2, &d.Sgp30.Tvoc, &d.Sgp40.VocIndex, &d.SampleTimeMs,
 			&d.Si.Temp, &d.Scd.Temp, &d.Si.Hum, &d.Scd.Hum, &d.Mprls.Pressure},
 		d.Sps.PointerIterable(),
 	)
 
-	for p := range pointers {
-		if err := binary.Read(reader, binary.LittleEndian, p); err != nil {
+	for idx := range pointers {
+		if err := binary.Read(reader, binary.LittleEndian, pointers[idx]); err != nil {
 			return fmt.Errorf("error converting bytes at index %d: %w", idx, err)
 		}
-		idx += 1
 	}
 
 	return nil
