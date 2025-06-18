@@ -6,6 +6,8 @@ const (
 	KEY_HTU_HUM         = "hum_htu"
 	KEY_SCD_TEMP        = "temp_scd"
 	KEY_SCD_HUM         = "hum_scd"
+	KEY_SI_TEMP         = "temp_si"
+	KEY_SI_HUM          = "hum_si"
 	KEY_SCD_CO2         = "co2"
 	KEY_SCD_CO2_LEGACY  = "rawethanol"
 	KEY_TEMP            = "temp"

@@ -189,6 +189,7 @@ func (d *DuetDataMk1Var2) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Sps.ToMap("_b"))
 	maps.Copy(ret, d.Sps.ToMap("_m"))
 	maps.Copy(ret, d.Si.ToMap())
+	maps.Copy(ret, d.Si.TempRh().ToMap())
 	maps.Copy(ret, d.Mprls.ToMap())
 	maps.Copy(ret, d.Sgp.ToMap())
 	maps.Copy(ret, d.RadioMeta.ToMap())

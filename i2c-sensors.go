@@ -49,15 +49,26 @@ type Si7021Measurement struct {
 	Temp, Hum float32
 }
 
+func (m Si7021Measurement) TempRh() CombinedTempRhMeasurements {
+	return CombinedTempRhMeasurements(m)
+}
+
+func (m Si7021Measurement) Temperature() float32 {
+	return m.Temp
+}
+
+func (m Si7021Measurement) Humidity() float32 {
+	return m.Hum
+}
+
 func (m Si7021Measurement) String() string {
 	return fmt.Sprintf("%.1fC %.1fperc", m.Temp, m.Hum)
 }
 
-// TODO: Using the general temp/hum for key is not consistent
 func (m Si7021Measurement) ToMap() map[string]any {
 	return map[string]any{
-		KEY_TEMP: m.Temp,
-		KEY_HUM:  m.Hum,
+		KEY_SI_TEMP: m.Temp,
+		KEY_SI_HUM:  m.Hum,
 	}
 }
 
@@ -75,6 +86,10 @@ func (m Si7021Measurement) DirectoryData() map[string]float32 {
 /* ~~ HTU ~~ */
 type Htu21Measurement struct {
 	Temp, Hum float32
+}
+
+func (m Htu21Measurement) TempRh() CombinedTempRhMeasurements {
+	return CombinedTempRhMeasurements(m)
 }
 
 func (m Htu21Measurement) String() string {
@@ -106,6 +121,10 @@ func (m Htu21Measurement) DirectoryData() map[string]float32 {
 type Scd41Measurement struct {
 	Temp, Hum float32
 	Co2       uint16
+}
+
+func (m Scd41Measurement) TempRh() CombinedTempRhMeasurements {
+	return CombinedTempRhMeasurements{m.Temp, m.Hum}
 }
 
 func (m Scd41Measurement) String() string {

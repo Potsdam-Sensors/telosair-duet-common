@@ -51,6 +51,7 @@ type DuetDataMk1Var3 struct {
 	Sgp30     Sgp30Measurement
 	Sgp40     Sgp40Measurement
 	RadioMeta RadioMetadata
+	TempRh    CombinedTempRhMeasurements
 }
 
 func (d *DuetDataMk1Var3) SensorMeasurements() []SensorMeasurement {
@@ -181,6 +182,8 @@ func (d *DuetDataMk1Var3) doPopulateFromSubStrings(splitStr []string) error {
 		d.SensorStates = uint8(sensorStates)
 	}
 
+	CombineTempRhMeasurements(d.Scd, d.Si, &d.TempRh)
+
 	return nil
 }
 
@@ -198,6 +201,7 @@ func (d *DuetDataMk1Var3) doPopulateFromBytes(buff []byte) error {
 			return fmt.Errorf("error converting bytes at index %d: %w", idx, err)
 		}
 	}
+	CombineTempRhMeasurements(d.Scd, d.Si, &d.TempRh)
 
 	return nil
 }
@@ -222,6 +226,7 @@ func (d *DuetDataMk1Var3) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Sps.ToMap("_m"))
 	maps.Copy(ret, d.Si.ToMap())
 	maps.Copy(ret, d.Scd.ToMap())
+	maps.Copy(ret, d.TempRh.ToMap())
 	maps.Copy(ret, d.Mprls.ToMap())
 	maps.Copy(ret, d.RadioMeta.ToMap())
 	if d.piMcuTempSet {
