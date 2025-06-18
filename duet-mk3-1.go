@@ -16,23 +16,6 @@ var DuetTypeMk3Var1 = DuetTypeInfo{
 	TypeAlias:            "Mk3.1",
 }
 
-/*
-	typedef struct __attribute__((packed, aligned(4))) {
-	  uint8_t hardwareVersion;
-	  uint8_t sensorVariation;
-	  uint8_t sensorStates;
-	  uint8_t _; //padding to align on 4, TODO: why not just remove `packed`?
-	  uint16_t id;
-	  uint16_t co2;
-	  uint32_t tvoc;
-	  unsigned long sample_time;
-	  float temperature;
-	  float humidity;
-	  float pressure;
-	  PMS5003::pms5003_data_t pt1;
-	  PMS5003::pms5003_data_t pt2;
-	} duet_sensor_reading_mk1_t;
-*/
 type DuetDataMk3Var1 struct {
 	SerialNumber   uint16
 	SampleTimeMs   uint32
