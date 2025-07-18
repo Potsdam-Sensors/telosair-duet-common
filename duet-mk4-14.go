@@ -48,9 +48,9 @@ func (d *DuetDataMk4Var14) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var14) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.14 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+	return fmt.Sprintf("[Duet %d, Type 4.14 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS: %s | CO: %.3f, O3: %.3f, NO2: %.3f | Radio: %s | Errstate %d | PoE Voltage %d]",
 		d.SerialNumber, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
-		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+		d.Co, d.O3, d.No2, d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var14) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var14
@@ -229,6 +229,9 @@ func (d *DuetDataMk4Var14) ToMap(gatewaySerial string) map[string]any {
 		KEY_LAST_RESET_TIME: d.LastResetUnix,
 		KEY_GATEWAY_SERIAL:  gatewaySerial,
 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
+		KEY_GAS_CO:          d.Co,
+		KEY_GAS_O3:          d.O3,
+		KEY_GAS_NO2:         d.No2,
 	}
 	maps.Copy(ret, d.Sps.ToMap("_t"))
 	maps.Copy(ret, d.Sps.ToMap("_b"))
