@@ -214,6 +214,8 @@ func (d *DuetDataMk4Var16) ToMap(gatewaySerial string) map[string]any {
 		KEY_LAST_RESET_TIME: d.LastResetUnix,
 		KEY_GATEWAY_SERIAL:  gatewaySerial,
 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
+
+		KEY_FS3000_VELOCITY: d.Fs3000Velocity,
 	}
 	maps.Copy(ret, d.Sps.ToMap("_t"))
 	maps.Copy(ret, d.Sps.ToMap("_b"))

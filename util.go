@@ -36,6 +36,8 @@ const (
 	KEY_TGS2611_RS = "tgs2611_rs"
 	KEY_TGS2600_RS = "tgs2600_rs"
 
+	KEY_FS3000_VELOCITY = "flow_rate"
+
 	CONNECTION_TYPE_LORA_GATEWAY = 0
 	CONNECTION_TYPE_LORAWAN      = 1 // TODO: is this true? Unused I think now
 	CONNECTION_TYPE_USB_SERIAL   = 2
