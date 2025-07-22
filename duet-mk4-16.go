@@ -10,8 +10,8 @@ import (
 
 /* ~~ MK4 Var 16 ~~ */
 var DuetTypeMk4Var16 = DuetTypeInfo{
-	ExpectedBytes:        58,
-	ExpectedStringLen:    15,
+	ExpectedBytes:        76,
+	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var16{} },
 	TypeAlias:            "Mk4.16",
 }
@@ -27,7 +27,9 @@ type DuetDataMk4Var16 struct {
 	PiMcuTemp      float32
 	piMcuTempSet   bool
 
-	Sps       Sps30Measurement
+	Pt1       Pms5003Measurement
+	Pt2       Pms5003Measurement
+	PtM       Pms5003Measurement
 	Scd       Scd41Measurement
 	Htu       Htu21Measurement
 	TempRh    CombinedTempRhMeasurements
@@ -39,7 +41,7 @@ type DuetDataMk4Var16 struct {
 }
 
 func (d *DuetDataMk4Var16) SensorMeasurements() []SensorMeasurement {
-	return []SensorMeasurement{d.Sps, d.TempRh, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
+	return []SensorMeasurement{d.PtM, d.TempRh, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
 }
 func (d *DuetDataMk4Var16) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
@@ -49,8 +51,8 @@ func (d *DuetDataMk4Var16) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var16) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.16 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | FS: %.3fm/s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Fs3000Velocity, d.Sps.String(),
+	return fmt.Sprintf("[Duet %d, Type 4.16 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | FS: %.3fm/s | PT: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Fs3000Velocity, d.PtM.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var16) GetTypeInfo() DuetTypeInfo {
@@ -95,8 +97,14 @@ func (d *DuetDataMk4Var16) doPopulateFromSubStrings(splitStr []string) error {
 	d.SampleTimeMs = uint32(st)
 	idx += 1
 
-	// SPS30 (as PMS5003)
-	if err := d.Sps.FromSerialString(splitStr[idx]); err != nil {
+	// PT1
+	if err := d.Pt1.FromSerialString(splitStr[idx]); err != nil {
+		return fmt.Errorf("failed to convert sps30 string, %s, to PlantowerData", splitStr[idx])
+	}
+	idx += 1
+
+	// PT2
+	if err := d.Pt2.FromSerialString(splitStr[idx]); err != nil {
 		return fmt.Errorf("failed to convert sps30 string, %s, to PlantowerData", splitStr[idx])
 	}
 	idx += 1
@@ -180,6 +188,7 @@ func (d *DuetDataMk4Var16) doPopulateFromSubStrings(splitStr []string) error {
 	idx += 1
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
+	MergePT(&d.Pt1, &d.Pt2, &d.PtM)
 	return nil
 }
 
@@ -188,8 +197,9 @@ func (d *DuetDataMk4Var16) doPopulateFromBytes(buff []byte) error {
 	pointers := append(
 		[]any{&d.SensorStates, &d.PoeUsbVoltage, &d.SerialNumber, &d.Scd.Co2, &d.Sgp.VocIndex, &d.SampleTimeMs,
 			&d.Htu.Temp, &d.Scd.Temp, &d.Htu.Hum, &d.Scd.Hum, &d.Mprls.Pressure, &d.Fs3000Velocity},
-		d.Sps.PointerIterable()...,
+		d.Pt1.PointerIterable()...,
 	)
+	pointers = append(pointers, d.Pt2.PointerIterable()...)
 
 	for idx := range pointers {
 		if err := binary.Read(reader, binary.LittleEndian, pointers[idx]); err != nil {
@@ -197,6 +207,7 @@ func (d *DuetDataMk4Var16) doPopulateFromBytes(buff []byte) error {
 		}
 	}
 	CombineTempRhMeasurements(d.Scd, d.Htu, &d.TempRh)
+	MergePT(&d.Pt1, &d.Pt2, &d.PtM)
 
 	return nil
 }
@@ -217,9 +228,9 @@ func (d *DuetDataMk4Var16) ToMap(gatewaySerial string) map[string]any {
 
 		KEY_FS3000_VELOCITY: d.Fs3000Velocity,
 	}
-	maps.Copy(ret, d.Sps.ToMap("_t"))
-	maps.Copy(ret, d.Sps.ToMap("_b"))
-	maps.Copy(ret, d.Sps.ToMap("_m"))
+	maps.Copy(ret, d.Pt1.ToMap("_t"))
+	maps.Copy(ret, d.Pt2.ToMap("_b"))
+	maps.Copy(ret, d.PtM.ToMap("_m"))
 	maps.Copy(ret, d.Htu.ToMap())
 	maps.Copy(ret, d.Scd.ToMap())
 	maps.Copy(ret, d.TempRh.ToMap())
