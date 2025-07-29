@@ -36,6 +36,21 @@ type DuetDataMk4Var6 struct {
 
 	Gas              GasSensorsMeasurement
 	Co, O3, No2, So2 float32
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var6) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var6) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var6) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var6) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var6) SensorMeasurements() []SensorMeasurement {

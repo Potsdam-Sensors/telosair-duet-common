@@ -39,6 +39,21 @@ type DuetDataMk4Var10 struct {
 	Co, No2 float32
 
 	Tgs2611_Rs, Tgs2600_Rs float32
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var10) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var10) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var10) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var10) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var10) SensorMeasurements() []SensorMeasurement {

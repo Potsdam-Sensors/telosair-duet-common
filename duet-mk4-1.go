@@ -36,6 +36,21 @@ type DuetDataMk4Var1 struct {
 	Mprls     MprlsMeasurement
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var1) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var1) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var1) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var1) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var1) SensorMeasurements() []SensorMeasurement {

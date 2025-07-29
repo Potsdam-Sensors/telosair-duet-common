@@ -19,6 +19,10 @@ type DuetData interface {
 	SetPiMcuTemp(val float32)
 	SetRadioData(v RadioMetadata)
 	SensorMeasurements() []SensorMeasurement
+	TimeResolved() bool
+	MarkTimeResolved(bool)
+	Timestamp() uint32
+	ResolveTime(uint32)
 }
 
 func getVersionFromBuffer(b []byte) (*DuetTypeInfo, error) {
@@ -115,7 +119,7 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 	return
 }
 
-func DuetDataFromRadioBytes(buff []byte, recievedUnixSec uint32, isRadio bool) (DuetData, error) {
+func DuetDataFromRadioBytes(buff []byte, recievedUnixSec uint32, receivedTimeOk bool, isRadio bool) (DuetData, error) {
 	typeInfo, err := getVersionFromBuffer(buff)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get duet type info: %w", err)
@@ -137,11 +141,12 @@ func DuetDataFromRadioBytes(buff []byte, recievedUnixSec uint32, isRadio bool) (
 		d.SetTimeSerial(recievedUnixSec)
 	}
 	d.RecalculateLastResetUnix()
+	d.MarkTimeResolved(receivedTimeOk)
 
 	return d, nil
 }
 
-func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error) {
+func DuetDataFromSerialString(s string, recievedUnixSec uint32, receivedTimeOk bool) (DuetData, error) {
 	/* Validate Arguments */
 	splitStr, typeInfo, err := getVersionFromString(s)
 	if err != nil {
@@ -165,6 +170,7 @@ func DuetDataFromSerialString(s string, recievedUnixSec uint32) (DuetData, error
 	d.SetTimeSerial(recievedUnixSec)
 
 	d.RecalculateLastResetUnix()
+	d.MarkTimeResolved(receivedTimeOk)
 
 	return d, nil
 }

@@ -38,6 +38,21 @@ type DuetDataMk4Var16 struct {
 	RadioMeta RadioMetadata
 
 	Fs3000Velocity float32
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var16) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var16) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var16) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var16) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var16) SensorMeasurements() []SensorMeasurement {

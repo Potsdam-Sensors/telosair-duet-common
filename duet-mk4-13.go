@@ -37,6 +37,21 @@ type DuetDataMk4Var13 struct {
 
 	Co, No, No2, Ch2o, H2s float32
 	Tgs2611, Tgs2600       float32 // TODO: What are these called and also make a struct for it
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var13) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var13) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var13) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var13) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var13) SensorMeasurements() []SensorMeasurement {

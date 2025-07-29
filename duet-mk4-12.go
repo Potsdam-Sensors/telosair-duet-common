@@ -36,6 +36,21 @@ type DuetDataMk4Var12 struct {
 	RadioMeta RadioMetadata
 
 	Latitude, Longitude float32
+
+	timeResolved bool
+}
+
+func (d *DuetDataMk4Var12) TimeResolved() bool {
+	return d.timeResolved
+}
+func (d *DuetDataMk4Var12) MarkTimeResolved(v bool) {
+	d.timeResolved = v
+}
+func (d *DuetDataMk4Var12) Timestamp() uint32 {
+	return d.UnixSec
+}
+func (d *DuetDataMk4Var12) ResolveTime(t uint32) {
+	d.UnixSec = t
 }
 
 func (d *DuetDataMk4Var12) SensorMeasurements() []SensorMeasurement {
