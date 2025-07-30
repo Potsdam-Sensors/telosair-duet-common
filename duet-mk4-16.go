@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 16 ~~ */
 var DuetTypeMk4Var16 = DuetTypeInfo{
-	ExpectedBytes:        76,
+	ExpectedBytes:        74,
 	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var16{} },
 	TypeAlias:            "Mk4.16",
@@ -211,10 +211,10 @@ func (d *DuetDataMk4Var16) doPopulateFromBytes(buff []byte) error {
 	reader := bytes.NewReader(buff)
 	pointers := append(
 		[]any{&d.SensorStates, &d.PoeUsbVoltage, &d.SerialNumber, &d.Scd.Co2, &d.Sgp.VocIndex, &d.SampleTimeMs,
-			&d.Htu.Temp, &d.Scd.Temp, &d.Htu.Hum, &d.Scd.Hum, &d.Mprls.Pressure, &d.Fs3000Velocity},
-		d.Pt1.PointerIterable()...,
+			&d.Htu.Temp, &d.Scd.Temp, &d.Htu.Hum, &d.Scd.Hum, &d.Mprls.Pressure, &d.Fs3000Velocity}, //38
+		d.Pt1.PointerIterable()..., //18
 	)
-	pointers = append(pointers, d.Pt2.PointerIterable()...)
+	pointers = append(pointers, d.Pt2.PointerIterable()...) //18
 
 	for idx := range pointers {
 		if err := binary.Read(reader, binary.LittleEndian, pointers[idx]); err != nil {
