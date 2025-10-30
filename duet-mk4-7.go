@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 7 - One SPS30 ~~ */
 var DuetTypeMk4Var7 = DuetTypeInfo{
-	ExpectedBytes:        52,
+	ExpectedBytes:        70,
 	ExpectedStringLen:    14,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var7{} },
 	TypeAlias:            "Mk4.7",
@@ -27,7 +27,7 @@ type DuetDataMk4Var7 struct {
 	PiMcuTemp      float32
 	piMcuTempSet   bool
 
-	Sps       Sps30Measurement
+	Sps       Sps30FloatMeasurement
 	Scd       Scd41Measurement
 	Htu       Htu21Measurement
 	TempRh    CombinedTempRhMeasurements
