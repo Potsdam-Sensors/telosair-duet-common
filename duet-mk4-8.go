@@ -35,8 +35,8 @@ type DuetDataMk4Var8 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
-	Gas    GasSensorsMeasurement
-	Co, O3 float32
+	Gas GasSensorsMeasurement
+	Co  float32
 
 	timeResolved bool
 }
@@ -65,8 +65,8 @@ func (d *DuetDataMk4Var8) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var8) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.8 | Unix %d | Co %.2f, O3: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber, d.UnixSec, d.Co, d.O3, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+	return fmt.Sprintf("[Duet %d, Type 4.8 | Unix %d | Co %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 (as PMS5003): [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, d.UnixSec, d.Co, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var8) GetTypeInfo() DuetTypeInfo {
@@ -186,7 +186,6 @@ func (d *DuetDataMk4Var8) doPopulateFromSubStrings(splitStr []string) error {
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	d.Co = d.Gas.Co
-	d.O3 = d.Gas.O3
 
 	return nil
 }
@@ -226,7 +225,6 @@ func (d *DuetDataMk4Var8) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
 	d.Co = d.Gas.Co
-	d.O3 = d.Gas.O3
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	return nil
@@ -245,7 +243,6 @@ func (d *DuetDataMk4Var8) ToMap(gatewaySerial string) map[string]any {
 		KEY_GATEWAY_SERIAL:  gatewaySerial,
 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
 		KEY_GAS_CO:          d.Co,
-		KEY_GAS_O3:          d.O3,
 	}
 	maps.Copy(ret, d.Sps.ToMap("_t"))
 	maps.Copy(ret, d.Sps.ToMap("_b"))
