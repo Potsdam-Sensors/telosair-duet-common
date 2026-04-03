@@ -53,7 +53,7 @@ func (d *DuetDataMk4Var18) ResolveTime(t uint32) {
 }
 
 func (d *DuetDataMk4Var18) SensorMeasurements() []SensorMeasurement {
-	return []SensorMeasurement{d.Sps, d.TempRh, d.Scd, d.Mprls, d.Sgp, &d.Gas, DuetSensorState{d.SensorStates}}
+	return []SensorMeasurement{d.Sps, d.TempRh, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
 }
 func (d *DuetDataMk4Var18) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
@@ -209,14 +209,9 @@ func (d *DuetDataMk4Var18) doPopulateFromBytes(buff []byte) error {
 	if err := d.Sps.PopulateFromBytesReader(reader); err != nil {
 		return fmt.Errorf("error reading sps30: %w", err)
 	}
-
-	d.Gas = GasSensorsMeasurement{
-		SensorBitField: binary.LittleEndian.Uint16(buff[106:108]),
+	if err := binary.Read(reader, binary.LittleEndian, &d.Co); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
-	if err := d.Gas.PopulateFromBytes(buff[70:106]); err != nil {
-		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
-	}
-	d.Co = d.Gas.Co
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
 	return nil
