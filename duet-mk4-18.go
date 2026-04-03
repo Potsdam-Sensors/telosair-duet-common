@@ -11,7 +11,7 @@ import (
 /* ~~ MK4 Var 18 (Indoor, 1 SPS30, CO (new alphasense)) ~~ */
 var DuetTypeMk4Var18 = DuetTypeInfo{
 	ExpectedBytes:        108,
-	ExpectedStringLen:    16,
+	ExpectedStringLen:    15,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var18{} },
 	TypeAlias:            "Mk4.18",
 }
