@@ -34,9 +34,7 @@ type DuetDataMk4Var18 struct {
 	Mprls     MprlsMeasurement
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
-
-	Gas GasSensorsMeasurement
-	Co  float32
+	Co        float32
 
 	timeResolved bool
 }
@@ -166,27 +164,21 @@ func (d *DuetDataMk4Var18) doPopulateFromSubStrings(splitStr []string) error {
 		d.PoeUsbVoltage = uint8(voltage)
 	}
 
+	// CO
+	if co, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
+		return fmt.Errorf("failed to convert CO string, %s, to float32", splitStr[12])
+	} else {
+		d.Co = float32(co)
+	}
+
 	// Sensor States
-	if sensorStates, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
+	if sensorStates, err := strconv.ParseUint(splitStr[12], 10, 8); err != nil {
 		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[14])
 	} else {
 		d.SensorStates = uint8(sensorStates)
 	}
 
-	// Gas Sensors Enabled
-	if bitfield, err := strconv.ParseUint(splitStr[12], 10, 16); err != nil {
-		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
-	} else {
-		d.Gas.SensorBitField = uint16(bitfield)
-	}
-
-	if err := d.Gas.PopulateFromString(splitStr[13]); err != nil {
-		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
-	}
-
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = d.Gas.Co
-
 	return nil
 }
 
