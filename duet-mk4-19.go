@@ -171,7 +171,7 @@ func (d *DuetDataMk4Var19) doPopulateFromSubStrings(splitStr []string) error {
 	if tgs_rs2, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
 		return fmt.Errorf("failed to convert TGS2611 resistance string, %s, to float32", splitStr[11])
 	} else {
-		d.TGS2611_Rs1 = float32(tgs_rs2)
+		d.TGS2611_Rs2 = float32(tgs_rs2)
 	}
 
 	// PoE / USB Voltage
