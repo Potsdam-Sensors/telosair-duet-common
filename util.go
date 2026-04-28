@@ -33,8 +33,10 @@ const (
 	KEY_LATITUDE        = "lat"
 	KEY_LONGITUDE       = "long"
 
-	KEY_TGS2611_RS = "tgs2611_rs"
-	KEY_TGS2600_RS = "tgs2600_rs"
+	KEY_TGS2611_RS     = "tgs2611_rs"
+	KEY_TGS2600_RS     = "tgs2600_rs"
+	KEY_TGS2611_V2_RS1 = "tgs2611_rs1"
+	KEY_TGS2611_V2_RS2 = "tgs2611_rs2"
 
 	KEY_FS3000_VELOCITY = "flow_rate"
 
