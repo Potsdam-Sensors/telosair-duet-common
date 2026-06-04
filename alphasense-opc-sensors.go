@@ -36,6 +36,6 @@ func (m AlphasenseOpcN3Measurement) ToMapPm(suff string) map[string]any {
 func (m AlphasenseOpcN3Measurement) ToMapTempRh() map[string]any {
 	return map[string]any{
 		"temp_opcn3": m.Temp,
-		"rh_opcn3":   m.Rh,
+		"hum_opcn3":  m.Rh,
 	}
 }
