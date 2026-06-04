@@ -89,6 +89,10 @@ func (d *DuetDataMk4Var24) RecalculateLastResetUnix() {
 	d.LastResetUnix = d.UnixSec - (d.SampleTimeMs / 1000)
 }
 
+/*
+Error converting data point, 4 24 4404 1831248 27.06 24.52 30.38 28.62 33.65 25.89 404.82 100 426 0.27 0.51 0.59 39 0
+: failed to populate for type Mk4.24: failed to convert voc index string, 25.89, to uint32
+*/
 func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	cur := 0
 	// Serial Number
@@ -127,6 +131,7 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	} else {
 		d.Opc.Temp = float32(temp)
 	}
+	cur++
 
 	// Humidities (1 & 2 & 3)
 	if hum, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
@@ -148,6 +153,7 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	} else {
 		d.Opc.Rh = float32(hum)
 	}
+	cur++
 
 	// Pressure
 	if press, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
