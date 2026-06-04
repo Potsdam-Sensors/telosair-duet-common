@@ -27,9 +27,9 @@ func (m AlphasenseOpcN3Measurement) String() string {
 
 func (m AlphasenseOpcN3Measurement) ToMapPm(suff string) map[string]any {
 	return map[string]any{
-		"pm1" + suff:   m.PM1,
-		"pm2.5" + suff: m.PM2p5,
-		"pm10" + suff:  m.PM10,
+		"pm10" + suff:  m.PM1,
+		"pm25" + suff:  m.PM2p5,
+		"pm100" + suff: m.PM10,
 	}
 }
 
