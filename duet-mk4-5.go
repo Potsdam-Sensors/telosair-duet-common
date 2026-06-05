@@ -1,5 +1,3 @@
-//go:build ignore
-
 package telosairduetcommon
 
 import (
@@ -37,10 +35,7 @@ type DuetDataMk4Var5 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
-	// Co, O3, No2 float32
-	GasSensors [9]float32
-    GasTypes   uint16
-
+	Co, O3, No2 float32
 
 	timeResolved bool
 }
@@ -68,41 +63,10 @@ func (d *DuetDataMk4Var5) SetPiMcuTemp(val float32) {
 	d.PiMcuTemp = val
 	d.piMcuTempSet = true
 }
-// func (d *DuetDataMk4Var5) String() string {
-// 	return fmt.Sprintf("[Duet %d, Type 4.5 | Unix %d | Co %.2f, O3: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
-// 		d.SerialNumber, d.UnixSec, d.Co, d.O3, d.No2, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
-// 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
-// }
-
 func (d *DuetDataMk4Var5) String() string {
-	return fmt.Sprintf(
-		"[Duet %d, Type 4.5 | Unix %d | GAS [CO %.2f O3 %.2f NO2 %.2f NH3 %.2f NO %.2f SO2 %.2f CH2O %.2f VOC %.2f CH4 %.2f] | GasTypes %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber,
-		d.UnixSec,
-
-		d.GasSensors[0], // CO
-		d.GasSensors[1], // O3
-		d.GasSensors[2], // NH3
-		d.GasSensors[3], // NO
-		d.GasSensors[4], // NO2
-		d.GasSensors[5], // SO2
-		d.GasSensors[6], // CH2O
-		d.GasSensors[7], // VOC
-		d.GasSensors[8], // CH4
-
-		d.GasTypes,
-
-		d.TempRh.String(),
-		d.Htu.String(),
-		d.Scd.String(),
-		d.Mprls.String(),
-		d.Sgp.String(),
-		d.Sps.String(),
-
-		d.RadioMeta.String(),
-		d.SensorStates,
-		d.PoeUsbVoltage,
-	)
+	return fmt.Sprintf("[Duet %d, Type 4.5 | Unix %d | Co %.2f, O3: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS30 [%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, d.UnixSec, d.Co, d.O3, d.No2, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var5) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var5
@@ -206,43 +170,47 @@ func (d *DuetDataMk4Var5) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	idx += 1
 
-		// GAS SENSORS (9 floats from firmware)
-	for i := 0; i < 9; i++ {
-		val, err := strconv.ParseFloat(splitStr[idx], 32)
-		if err != nil {
-			return fmt.Errorf("failed gasSensors[%d]: %s", i, splitStr[idx])
-		}
-		d.GasSensors[i] = float32(val)
-		idx++
+	// Gases
+	if co, err := strconv.ParseFloat(splitStr[idx], 32); err != nil {
+		return fmt.Errorf("failed to convert co string, %s, to float32", splitStr[idx])
+	} else {
+		d.Co = float32(co)
 	}
+	idx += 1
 
-	// GAS TYPES
-	gasTypes, err := strconv.ParseUint(splitStr[idx], 10, 16)
-		if err != nil {
-			return fmt.Errorf("failed gasTypes: %s", splitStr[idx])
-		}
-	d.GasTypes = uint16(gasTypes)
-	idx++
-
-	// PoE / USB Voltage  (UNCHANGED POSITION, just shifted correctly)
-	voltage, err := strconv.ParseUint(splitStr[idx], 10, 8)
-	if err != nil {
-		return fmt.Errorf("failed voltage: %s", splitStr[idx])
+	if o3, err := strconv.ParseFloat(splitStr[idx], 32); err != nil {
+		return fmt.Errorf("failed to convert o3 string, %s, to float32", splitStr[idx])
+	} else {
+		d.O3 = float32(o3)
 	}
-	d.PoeUsbVoltage = uint8(voltage)
-	idx++
+	idx += 1
+
+	if no2, err := strconv.ParseFloat(splitStr[idx], 32); err != nil {
+		return fmt.Errorf("failed to convert no2 string, %s, to float32", splitStr[idx])
+	} else {
+		d.No2 = float32(no2)
+	}
+	idx += 1
+
+	// PoE / USB Voltage
+	if voltage, err := strconv.ParseUint(splitStr[idx], 10, 8); err != nil {
+		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[idx])
+	} else {
+		d.PoeUsbVoltage = uint8(voltage)
+	}
+	idx += 1
 
 	// Sensor States
-	sensorStates, err := strconv.ParseUint(splitStr[idx], 10, 8)
-	if err != nil {
-		return fmt.Errorf("failed sensorStates: %s", splitStr[idx])
+	if sensorStates, err := strconv.ParseUint(splitStr[idx], 10, 8); err != nil {
+		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[idx])
+	} else {
+		d.SensorStates = uint8(sensorStates)
 	}
-	d.SensorStates = uint8(sensorStates)
-	idx++
+	idx += 1
 
-		CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-		return nil
-	}
+	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
+	return nil
+}
 
 func (d *DuetDataMk4Var5) doPopulateFromBytes(buff []byte) error {
 	reader := bytes.NewReader(buff)
