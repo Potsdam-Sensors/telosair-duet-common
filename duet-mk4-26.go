@@ -189,8 +189,10 @@ func (d *DuetDataMk4Var26) doPopulateFromSubStrings(splitStr []string) error {
 	} else {
 		d.SensorStates = uint8(sensorStates)
 	}
-	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 	cur++
+
+	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+	MergePT(&d.Pt, &d.Sps, &d.PtM)
 
 	return nil
 }
