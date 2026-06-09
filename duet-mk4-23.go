@@ -12,7 +12,7 @@ import (
 var DuetTypeMk4Var23 = DuetTypeInfo{
 	ExpectedBytes:        98,
 	ExpectedStringLen:    18,
-	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var10{} },
+	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var23{} },
 	TypeAlias:            "Mk4.23",
 }
 
@@ -268,8 +268,8 @@ func (d *DuetDataMk4Var23) ToMap(gatewaySerial string) map[string]any {
 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
 		KEY_GAS_CO:          d.Co,
 		KEY_GAS_NO2:         d.No2,
-		KEY_TGS2611_V2_RS1:      d.TGS2611_Rs1,
-		KEY_TGS2611_V2_RS2:      d.TGS2611_Rs2,
+		KEY_TGS2611_V2_RS1:  d.TGS2611_Rs1,
+		KEY_TGS2611_V2_RS2:  d.TGS2611_Rs2,
 	}
 	maps.Copy(ret, d.Sps.ToMap("_t"))
 	maps.Copy(ret, d.Sps.ToMap("_b"))
