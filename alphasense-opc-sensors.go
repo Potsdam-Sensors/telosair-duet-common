@@ -12,25 +12,7 @@ type AlphasenseOpcN3Measurement struct {
 	Bins             [24]float32
 }
 
-/*
-	func (p *Pms5003Measurement) FromSerialString(s string) error {
-		// Convert the string into a slice of strings of numbers
-		splitStr := strings.Split(strings.Trim(s, "[]"), ",")
-
-		// Make sure the length is correct.
-		if len(splitStr) != 9 {
-			return fmt.Errorf("expected list of length 9 for PlantowerData. Instead, have %d: %v", len(splitStr), splitStr)
-		}
-
-		// Try to convert each token from the slice to a uint16 and store the value in the PlantowerData
-		convErr := fmt.Errorf("failed to convert a plantower data point to uint16 from %v", splitStr)
-		if val, err := strconv.ParseUint(splitStr[0], 10, 16); err != nil {
-			return convErr
-		} else {
-			p.PM1 = uint16(val)
-		}
-*/
-func (m AlphasenseOpcN3Measurement) PopulateBinsFromString(s string) error {
+func (m *AlphasenseOpcN3Measurement) PopulateBinsFromString(s string) error {
 	splitStr := strings.Split(strings.Trim(s, "[]"), ",")
 
 	if n := len(splitStr); n != 24 {
