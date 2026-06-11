@@ -179,7 +179,7 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	cur++
 
-	// OPC-N3 PM1, 2.5, 10
+	// OPC-N3 PM1, 2.5, 10 & Bins
 	if pm1, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
 		return fmt.Errorf("failed to convert opc pm1 string, %s, to float32", splitStr[cur])
 	} else {
@@ -198,6 +198,11 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 		return fmt.Errorf("failed to convert opc pm10 string, %s, to float32", splitStr[cur])
 	} else {
 		d.Opc.PM10 = float32(pm10)
+	}
+	cur++
+
+	if err := d.Opc.PopulateBinsFromString(splitStr[cur]); err != nil {
+		return fmt.Errorf("failed to convert opcn3 bins: %v", err)
 	}
 	cur++
 
@@ -281,6 +286,7 @@ func (d *DuetDataMk4Var24) ToMap(gatewaySerial string) map[string]any {
 	maps.Copy(ret, d.Opc.ToMapPm("_t"))
 	maps.Copy(ret, d.Opc.ToMapPm("_b"))
 	maps.Copy(ret, d.Opc.ToMapPm("_m"))
+	maps.Copy(ret, d.Opc.ToMapBins())
 	maps.Copy(ret, d.Opc.ToMapTempRh())
 	maps.Copy(ret, d.Htu.ToMap())
 	maps.Copy(ret, d.Scd.ToMap())
