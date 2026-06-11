@@ -10,8 +10,8 @@ import (
 
 /* ~~ MK4 Var 24 - One OPC-N3 ~~ */
 var DuetTypeMk4Var24 = DuetTypeInfo{
-	ExpectedBytes:        56,
-	ExpectedStringLen:    18,
+	ExpectedBytes:        152,
+	ExpectedStringLen:    19,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var24{} },
 	TypeAlias:            "Mk4.24",
 }
