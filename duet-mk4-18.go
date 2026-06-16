@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 18 (Indoor, 1 SPS30, CO (new alphasense)) ~~ */
 var DuetTypeMk4Var18 = DuetTypeInfo{
-	ExpectedBytes:        108,
+	ExpectedBytes:        76,
 	ExpectedStringLen:    15,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var18{} },
 	TypeAlias:            "Mk4.18",
@@ -27,7 +27,7 @@ type DuetDataMk4Var18 struct {
 	PiMcuTemp      float32
 	piMcuTempSet   bool
 
-	Sps       Sps30FloatMeasurement
+	Sps       Sps30Measurement
 	Scd       Scd41Measurement
 	Htu       Htu21Measurement
 	TempRh    CombinedTempRhMeasurements
@@ -190,7 +190,7 @@ func (d *DuetDataMk4Var18) doPopulateFromBytes(buff []byte) error {
 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
 
-	reader := bytes.NewReader(buff[14:70])
+	reader := bytes.NewReader(buff[14:52])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
@@ -206,9 +206,10 @@ func (d *DuetDataMk4Var18) doPopulateFromBytes(buff []byte) error {
 	if err := binary.Read(reader, binary.LittleEndian, &d.Mprls.Pressure); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
-	if err := d.Sps.PopulateFromBytesReader(reader); err != nil {
+	if err := d.Sps.PopulateFromBytes(buff[52:70]); err != nil {
 		return fmt.Errorf("error reading sps30: %w", err)
 	}
+	reader = bytes.NewReader(buff[70:74])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Co); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}

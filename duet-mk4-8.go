@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 8 (Indoor, 1 SPS30, CO, NO2, CH4) ~~ */
 var DuetTypeMk4Var8 = DuetTypeInfo{
-	ExpectedBytes:        108,
+	ExpectedBytes:        90,
 	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var8{} },
 	TypeAlias:            "Mk4.8",
@@ -27,7 +27,7 @@ type DuetDataMk4Var8 struct {
 	PiMcuTemp      float32
 	piMcuTempSet   bool
 
-	Sps       Sps30FloatMeasurement
+	Sps       Sps30Measurement
 	Scd       Scd41Measurement
 	Htu       Htu21Measurement
 	TempRh    CombinedTempRhMeasurements
@@ -198,7 +198,7 @@ func (d *DuetDataMk4Var8) doPopulateFromBytes(buff []byte) error {
 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
 
-	reader := bytes.NewReader(buff[14:70])
+	reader := bytes.NewReader(buff[14:34])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
@@ -214,14 +214,14 @@ func (d *DuetDataMk4Var8) doPopulateFromBytes(buff []byte) error {
 	if err := binary.Read(reader, binary.LittleEndian, &d.Mprls.Pressure); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
-	if err := d.Sps.PopulateFromBytesReader(reader); err != nil {
+	if err := d.Sps.PopulateFromBytes(buff[34:52]); err != nil {
 		return fmt.Errorf("error reading sps30: %w", err)
 	}
 
 	d.Gas = GasSensorsMeasurement{
-		SensorBitField: binary.LittleEndian.Uint16(buff[106:108]),
+		SensorBitField: binary.LittleEndian.Uint16(buff[88:90]),
 	}
-	if err := d.Gas.PopulateFromBytes(buff[70:106]); err != nil {
+	if err := d.Gas.PopulateFromBytes(buff[52:88]); err != nil {
 		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
 	}
 	d.Co = d.Gas.Co
