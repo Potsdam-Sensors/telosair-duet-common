@@ -27,7 +27,7 @@ type DuetDataMk4Var7 struct {
 	PiMcuTemp      float32
 	piMcuTempSet   bool
 
-	Sps       Sps30FloatMeasurement
+	Sps       Sps30Measurement
 	Scd       Scd41Measurement
 	Htu       Htu21Measurement
 	TempRh    CombinedTempRhMeasurements
