@@ -12,9 +12,9 @@ import (
 // 	return float32(math.Round(float64(val*100)) / 100)
 // }
 
-/* ~~ MK4 Var 0 ~~ */
+/* ~~ MK4 Var 25 ~~ */
 var DuetTypeMk4Var25 = DuetTypeInfo{
-	ExpectedBytes:        60,
+	ExpectedBytes:        62,
 	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var25{} },
 	TypeAlias:            "Mk4.25",
