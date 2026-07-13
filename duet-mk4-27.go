@@ -72,13 +72,19 @@ func (d *DuetDataMk4Var27) SetPiMcuTemp(val float32) {
 // 		d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
 // 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 // }
+// func (d *DuetDataMk4Var27) String() string {
+//     return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PID: ppb:%.2f raw:%.2fmV | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+//         d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), 
+//         d.Pid.Ppb, d.Pid.RawMv, // <-- Added PID values here
+//         d.Sps.String(), d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+// }
+
 func (d *DuetDataMk4Var27) String() string {
-    return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PID: ppb:%.2f raw:%.2fmV | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+    return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PID: raw:%.2fmV ev:%.2fmV | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
         d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), 
-        d.Pid.Ppb, d.Pid.RawMv, // <-- Added PID values here
+        d.Pid.RawMV, d.Pid.EvMV, // Cleaned up field names and ordered logically (Signal first, Ref second)
         d.Sps.String(), d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
-
 func (d *DuetDataMk4Var27) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var27
 }
@@ -177,13 +183,13 @@ func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
     if rawMv, err := strconv.ParseFloat(splitStr[10], 32); err != nil {
         return fmt.Errorf("failed to convert pid RawMv string, %s, to float32", splitStr[10])
     } else {
-        d.Pid.RawMv = float32(rawMv) 
+        d.Pid.RawMV = float32(rawMv) 
     }
 
-    if ppb, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
-        return fmt.Errorf("failed to convert pid Ppb string, %s, to float32", splitStr[11])
+    if evMv, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
+        return fmt.Errorf("failed to convert pid EvMv string, %s, to float32", splitStr[11])
     } else {
-        d.Pid.Ppb = float32(ppb) 
+        d.Pid.EvMV = float32(evMv) 
     }
 
     // PoE / USB Voltage [13]

@@ -5,33 +5,39 @@ import (
 )
 
 const (
-	KEY_PID_PPB    = "pid_ppb"
 	KEY_PID_RAW_MV = "pid_raw_mv"
+	KEY_PID_EV    = "pid_ev"
+	
 )
 
 type PidMeasurement struct {
-	Ppb   float32
-	RawMv float32
+    RawMV float32 
+    EvMV  float32 
 }
+
+// type PidMeasurement struct {
+// 	Ppb   float32
+// 	RawMv float32
+// }
 
 // String provides a clean, readable representation of the PID data
 func (m PidMeasurement) String() string {
-	return fmt.Sprintf("%.2f ppb (%.2f mV)", m.Ppb, m.RawMv)
+	return fmt.Sprintf("Signal: %.2f mV | Ref/eVX: %.2f mV", m.RawMV, m.EvMV)
 }
 
 // ToMap serializes the data for database ingestion or payload generation
 func (m PidMeasurement) ToMap() map[string]any {
 	return map[string]any{
-		KEY_PID_PPB:    m.Ppb,
-		KEY_PID_RAW_MV: m.RawMv,
+		KEY_PID_RAW_MV:    m.RawMV,
+		KEY_PID_EV: m.EvMV,
 	}
 }
 
 // FloatMap provides a typed float32 map representation
 func (m PidMeasurement) FloatMap() map[string]float32 {
 	return map[string]float32{
-		KEY_PID_PPB:    m.Ppb,
-		KEY_PID_RAW_MV: m.RawMv,
+		KEY_PID_RAW_MV:    m.RawMV,
+		KEY_PID_EV: m.EvMV,
 	}
 }
 
