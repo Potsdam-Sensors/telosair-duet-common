@@ -15,7 +15,7 @@ import (
 /* ~~ MK4 Var 27 ~~ */
 var DuetTypeMk4Var27 = DuetTypeInfo{
 	ExpectedBytes:        62,
-	ExpectedStringLen:    16,
+	ExpectedStringLen:    17,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var27{} },
 	TypeAlias:            "Mk4.27",
 }
@@ -67,11 +67,18 @@ func (d *DuetDataMk4Var27) SetPiMcuTemp(val float32) {
 	d.PiMcuTemp = val
 	d.piMcuTempSet = true
 }
+// func (d *DuetDataMk4Var27) String() string {
+// 	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+// 		d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
+// 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+// }
 func (d *DuetDataMk4Var27) String() string {
-	return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Sps.String(),
-		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
+    return fmt.Sprintf("[Duet %d, Type %d.%d | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PID: ppb:%.2f raw:%.2fmV | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+        d.SerialNumber, 4, 27, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), 
+        d.Pid.Ppb, d.Pid.RawMv, // <-- Added PID values here
+        d.Sps.String(), d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
+
 func (d *DuetDataMk4Var27) GetTypeInfo() DuetTypeInfo {
 	return DuetTypeMk4Var27
 }
@@ -96,112 +103,315 @@ func (d *DuetDataMk4Var27) RecalculateLastResetUnix() {
 }
 
 func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
-	// Serial Number
-	sn, err := strconv.ParseUint(splitStr[0], 10, 16)
-	if err != nil {
-		return fmt.Errorf("failed to convert DuetSerialNumber string, %s, to uint32", splitStr[0])
-	}
-	d.SerialNumber = uint16(sn)
+    if len(splitStr) < 15 {
+        return fmt.Errorf("insufficient data points: got %d, want at least 15", len(splitStr))
+    }
 
-	// Sample Time
-	st, err := strconv.ParseUint(splitStr[1], 10, 32)
-	if err != nil {
-		return fmt.Errorf("failed to convert SampleTime string, %s, to uint32", splitStr[1])
-	}
-	d.SampleTimeMs = uint32(st)
+    // Serial Number [0]
+    sn, err := strconv.ParseUint(splitStr[0], 10, 16)
+    if err != nil {
+        return fmt.Errorf("failed to convert DuetSerialNumber string, %s, to uint16", splitStr[0])
+    }
+    d.SerialNumber = uint16(sn)
 
-	// // Plantower PMS5003s
-	// if err := d.Pt1.FromSerialString(splitStr[2]); err != nil {
-	// 	return fmt.Errorf("failed to convert PT0 string, %s, to PlantowerData", splitStr[2])
-	// }
+    // Sample Time [1]
+    st, err := strconv.ParseUint(splitStr[1], 10, 32)
+    if err != nil {
+        return fmt.Errorf("failed to convert SampleTime string, %s, to uint32", splitStr[1])
+    }
+    d.SampleTimeMs = uint32(st)
 
-	// Plantower PMS5003s
-	if err := d.Sps.FromSerialString(splitStr[2]); err != nil {
-		return fmt.Errorf("failed to convert PT0 string, %s, to PlantowerData", splitStr[2])
-	}
-	// if err := d.Pt2.FromSerialString(splitStr[3]); err != nil {
-	// 	return fmt.Errorf("failed to convert PT1 string, %s, to PlantowerData", splitStr[4])
-	// }
+    // SPS30 Data [2] - Re-enabled!
+    if err := d.Sps.FromSerialString(splitStr[2]); err != nil {
+        return fmt.Errorf("failed to convert SPS string, %s, to PlantowerData", splitStr[2])
+    }
 
-	// Temperatures (1 & 2)
-	if temp, err := strconv.ParseFloat(splitStr[3], 32); err != nil {
-		return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[3])
-	} else {
-		d.Htu.Temp = float32(temp)
-	}
+    // Temperatures (HTU then SCD) [3, 4]
+    if temp, err := strconv.ParseFloat(splitStr[3], 32); err != nil {
+        return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[3])
+    } else {
+        d.Htu.Temp = float32(temp)
+    }
 
-	if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
-		return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[4])
-	} else {
-		d.Scd.Temp = float32(temp)
-	}
+    if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
+        return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[4])
+    } else {
+        d.Scd.Temp = float32(temp)
+    }
 
-	// Humidities (1 & 2)
-	if hum, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
-		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[5])
-	} else {
-		d.Htu.Hum = float32(hum)
-	}
+    // Humidities (HTU then SCD) [5, 6]
+    if hum, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
+        return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[5])
+    } else {
+        d.Htu.Hum = float32(hum)
+    }
 
-	if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
-		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[6])
-	} else {
-		d.Scd.Hum = float32(hum)
-	}
+    if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
+        return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[6])
+    } else {
+        d.Scd.Hum = float32(hum)
+    }
 
-	// Pressure
-	if press, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
-		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[7])
-	} else {
-		d.Mprls.Pressure = float32(press)
-	}
+    // Pressure [7]
+    if press, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
+        return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[7])
+    } else {
+        d.Mprls.Pressure = float32(press)
+    }
 
-	// VOC Index
-	if voc, err := strconv.ParseUint(splitStr[8], 10, 32); err != nil {
-		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[8])
-	} else {
-		d.Sgp.VocIndex = uint32(voc)
-	}
+    // SGP40 VOC Index [8]
+    if voc, err := strconv.ParseUint(splitStr[8], 10, 32); err != nil {
+        return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[8])
+    } else {
+        d.Sgp.VocIndex = uint32(voc)
+    }
 
-	// CO2
-	if co2, err := strconv.ParseUint(splitStr[9], 10, 16); err != nil {
-		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[9])
-	} else {
-		d.Scd.Co2 = uint16(co2)
-	}
+    // SCD41 CO2 [9]
+    if co2, err := strconv.ParseUint(splitStr[9], 10, 16); err != nil {
+        return fmt.Errorf("failed to convert co2 string, %s, to uint16", splitStr[9])
+    } else {
+        d.Scd.Co2 = uint16(co2)
+    }
 
-	// PoE / USB Voltage
-	if voltage, err := strconv.ParseUint(splitStr[10], 10, 8); err != nil {
-		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[10])
-	} else {
-		d.PoeUsbVoltage = uint8(voltage)
-	}
+    // PID Values [10, 11]
+    if rawMv, err := strconv.ParseFloat(splitStr[10], 32); err != nil {
+        return fmt.Errorf("failed to convert pid RawMv string, %s, to float32", splitStr[10])
+    } else {
+        d.Pid.RawMv = float32(rawMv) 
+    }
 
-	// 	// TGS2611
-	// if tgs_rs1, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
-	// 	return fmt.Errorf("failed to convert TGS2611 string, %s, to float32", splitStr[11])
-	// } else {
-	// 	d.TGS2611_Rs1 = float32(tgs_rs1)
-	// }
+    if ppb, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
+        return fmt.Errorf("failed to convert pid Ppb string, %s, to float32", splitStr[11])
+    } else {
+        d.Pid.Ppb = float32(ppb) 
+    }
 
+    // Note: splitStr[12] is pid_status. Since it isn't in your PidMeasurement struct, we safely skip it.
 
-	// if tgs_rs2, err := strconv.ParseFloat(splitStr[12], 32); err != nil {
-	// 	return fmt.Errorf("failed to convert TGS2600 string, %s, to float32", splitStr[12])
-	// } else {
-	// 	d.TGS2611_Rs2 = float32(tgs_rs2)
-	// }
+    // PoE / USB Voltage [13]
+    if voltage, err := strconv.ParseUint(splitStr[13], 10, 8); err != nil {
+        return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[13])
+    } else {
+        d.PoeUsbVoltage = uint8(voltage)
+    }
 
-	// Sensor States
-	if sensorStates, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
-		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[11])
-	} else {
-		d.SensorStates = uint8(sensorStates)
-	}
-	// MergePT(&d.Pt1, &d.Pt1, &d.Pt1)
-	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+    // Sensor States [14]
+    if sensorStates, err := strconv.ParseUint(splitStr[14], 10, 8); err != nil {
+        return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[14])
+    } else {
+        d.SensorStates = uint8(sensorStates)
+    }
 
-	return nil
+    CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+
+    return nil
 }
+// func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
+//     // Boundary check to match the 14 remaining elements after HW and Var are stripped
+//     if len(splitStr) < 14 {
+//         return fmt.Errorf("insufficient data points: got %d, want at least 14", len(splitStr))
+//     }
+
+//     // Serial Number [0]
+//     sn, err := strconv.ParseUint(splitStr[0], 10, 16)
+//     if err != nil {
+//         return fmt.Errorf("failed to convert DuetSerialNumber string, %s, to uint16", splitStr[0])
+//     }
+//     d.SerialNumber = uint16(sn)
+
+//     // Sample Time [1]
+//     st, err := strconv.ParseUint(splitStr[1], 10, 32)
+//     if err != nil {
+//         return fmt.Errorf("failed to convert SampleTime string, %s, to uint32", splitStr[1])
+//     }
+//     d.SampleTimeMs = uint32(st)
+
+//     // HTU Temperature & Humidity [2, 3]
+//     if temp, err := strconv.ParseFloat(splitStr[2], 32); err != nil {
+//         return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[2])
+//     } else {
+//         d.Htu.Temp = float32(temp)
+//     }
+
+//     if hum, err := strconv.ParseFloat(splitStr[3], 32); err != nil {
+//         return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[3])
+//     } else {
+//         d.Htu.Hum = float32(hum)
+//     }
+
+//     // SCD Temperature & Humidity [4, 5]
+//     if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
+//         return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[4])
+//     } else {
+//         d.Scd.Temp = float32(temp)
+//     }
+
+//     if hum, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
+//         return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[5])
+//     } else {
+//         d.Scd.Hum = float32(hum)
+//     }
+
+//     // MPRLS Pressure [6]
+//     if press, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
+//         return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[6])
+//     } else {
+//         d.Mprls.Pressure = float32(press)
+//     }
+
+//     // SGP40 VOC Index [7]
+//     if voc, err := strconv.ParseUint(splitStr[7], 10, 32); err != nil {
+//         return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[7])
+//     } else {
+//         d.Sgp.VocIndex = uint32(voc)
+//     }
+
+//     // SCD41 CO2 [8]
+//     if co2, err := strconv.ParseUint(splitStr[8], 10, 16); err != nil {
+//         return fmt.Errorf("failed to convert co2 string, %s, to uint16", splitStr[8])
+//     } else {
+//         d.Scd.Co2 = uint16(co2)
+//     }
+
+// // PID Values [9, 10] 
+//     if rawMv, err := strconv.ParseFloat(splitStr[9], 32); err != nil {
+//         return fmt.Errorf("failed to convert pid RawMv string, %s, to float32", splitStr[9])
+//     } else {
+//         d.Pid.RawMv = float32(rawMv) 
+//     }
+
+//     if ppb, err := strconv.ParseFloat(splitStr[10], 32); err != nil {
+//         return fmt.Errorf("failed to convert pid Ppb string, %s, to float32", splitStr[10])
+//     } else {
+//         d.Pid.Ppb = float32(ppb) 
+//     }
+//     // PoE / USB Voltage [11]
+//     if voltage, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
+//         return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[11])
+//     } else {
+//         d.PoeUsbVoltage = uint8(voltage)
+//     }
+
+//     // Sensor States [12]
+//     if sensorStates, err := strconv.ParseUint(splitStr[12], 10, 8); err != nil {
+//         return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[12])
+//     } else {
+//         d.SensorStates = uint8(sensorStates)
+//     }
+
+//     // [13] is the trailing '0' in your log, which we can safely ignore
+
+//     CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+
+//     return nil
+// }
+// func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
+// 	// Serial Number
+// 	sn, err := strconv.ParseUint(splitStr[0], 10, 16)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to convert DuetSerialNumber string, %s, to uint32", splitStr[0])
+// 	}
+// 	d.SerialNumber = uint16(sn)
+
+// 	// Sample Time
+// 	st, err := strconv.ParseUint(splitStr[1], 10, 32)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to convert SampleTime string, %s, to uint32", splitStr[1])
+// 	}
+// 	d.SampleTimeMs = uint32(st)
+
+// 	// // Plantower PMS5003s
+// 	// if err := d.Pt1.FromSerialString(splitStr[2]); err != nil {
+// 	// 	return fmt.Errorf("failed to convert PT0 string, %s, to PlantowerData", splitStr[2])
+// 	// }
+
+// 	// Plantower PMS5003s
+// 	if err := d.Sps.FromSerialString(splitStr[2]); err != nil {
+// 		return fmt.Errorf("failed to convert PT0 string, %s, to PlantowerData", splitStr[2])
+// 	}
+// 	// if err := d.Pt2.FromSerialString(splitStr[3]); err != nil {
+// 	// 	return fmt.Errorf("failed to convert PT1 string, %s, to PlantowerData", splitStr[4])
+// 	// }
+
+// 	// Temperatures (1 & 2)
+// 	if temp, err := strconv.ParseFloat(splitStr[3], 32); err != nil {
+// 		return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[3])
+// 	} else {
+// 		d.Htu.Temp = float32(temp)
+// 	}
+
+// 	if temp, err := strconv.ParseFloat(splitStr[4], 32); err != nil {
+// 		return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[4])
+// 	} else {
+// 		d.Scd.Temp = float32(temp)
+// 	}
+
+// 	// Humidities (1 & 2)
+// 	if hum, err := strconv.ParseFloat(splitStr[5], 32); err != nil {
+// 		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[5])
+// 	} else {
+// 		d.Htu.Hum = float32(hum)
+// 	}
+
+// 	if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
+// 		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[6])
+// 	} else {
+// 		d.Scd.Hum = float32(hum)
+// 	}
+
+// 	// Pressure
+// 	if press, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
+// 		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[7])
+// 	} else {
+// 		d.Mprls.Pressure = float32(press)
+// 	}
+
+// 	// VOC Index
+// 	if voc, err := strconv.ParseUint(splitStr[8], 10, 32); err != nil {
+// 		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[8])
+// 	} else {
+// 		d.Sgp.VocIndex = uint32(voc)
+// 	}
+
+// 	// CO2
+// 	if co2, err := strconv.ParseUint(splitStr[9], 10, 16); err != nil {
+// 		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[9])
+// 	} else {
+// 		d.Scd.Co2 = uint16(co2)
+// 	}
+
+// 	// PoE / USB Voltage
+// 	if voltage, err := strconv.ParseUint(splitStr[10], 10, 8); err != nil {
+// 		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[10])
+// 	} else {
+// 		d.PoeUsbVoltage = uint8(voltage)
+// 	}
+
+// 	// 	// TGS2611
+// 	// if tgs_rs1, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
+// 	// 	return fmt.Errorf("failed to convert TGS2611 string, %s, to float32", splitStr[11])
+// 	// } else {
+// 	// 	d.TGS2611_Rs1 = float32(tgs_rs1)
+// 	// }
+
+
+// 	// if tgs_rs2, err := strconv.ParseFloat(splitStr[12], 32); err != nil {
+// 	// 	return fmt.Errorf("failed to convert TGS2600 string, %s, to float32", splitStr[12])
+// 	// } else {
+// 	// 	d.TGS2611_Rs2 = float32(tgs_rs2)
+// 	// }
+
+// 	// Sensor States
+// 	if sensorStates, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
+// 		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[11])
+// 	} else {
+// 		d.SensorStates = uint8(sensorStates)
+// 	}
+// 	// MergePT(&d.Pt1, &d.Pt1, &d.Pt1)
+// 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+
+// 	return nil
+// }
 func (d *DuetDataMk4Var27) doPopulateFromBytes(buff []byte) error {
 	d.SensorStates = buff[0]
 	d.PoeUsbVoltage = buff[1]
@@ -243,32 +453,70 @@ func (d *DuetDataMk4Var27) doPopulateFromBytes(buff []byte) error {
 
 	return nil
 }
-func (d *DuetDataMk4Var27) ToMap(gatewaySerial string) map[string]any {
-	ret := map[string]any{
-		KEY_DEVICE_TYPE:     4.27,
-		KEY_SERIAL_NUMBER:   d.SerialNumber,
-		KEY_DEVICE_ID:       d.SerialNumber,
-		KEY_UNIX:            d.UnixSec,
-		KEY_ECO2:            0,
-		KEY_RAWH2:           0,
-		KEY_SENSOR_STATES:   d.SensorStates,
-		KEY_CONNECTION_TYPE: d.ConnectionType,
-		KEY_LAST_RESET_TIME: d.LastResetUnix,
-		KEY_GATEWAY_SERIAL:  gatewaySerial,
-		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
-	}
-	maps.Copy(ret, d.Sps.ToMap("_t"))
-	maps.Copy(ret, d.Sps.ToMap("_b"))
-	maps.Copy(ret, d.Sps.ToMap("_m"))
-	maps.Copy(ret, d.Htu.ToMap())
-	maps.Copy(ret, d.Scd.ToMap())
-	maps.Copy(ret, d.TempRh.ToMap())
-	maps.Copy(ret, d.Mprls.ToMap())
-	maps.Copy(ret, d.Sgp.ToMap())
-	maps.Copy(ret, d.RadioMeta.ToMap())
-	if d.piMcuTempSet {
-		ret[KEY_PI_MCU_TEMP] = d.PiMcuTemp
-	}
+// func (d *DuetDataMk4Var27) ToMap(gatewaySerial string) map[string]any {
+// 	ret := map[string]any{
+// 		KEY_DEVICE_TYPE:     4.27,
+// 		KEY_SERIAL_NUMBER:   d.SerialNumber,
+// 		KEY_DEVICE_ID:       d.SerialNumber,
+// 		KEY_UNIX:            d.UnixSec,
+// 		KEY_ECO2:            0,
+// 		KEY_RAWH2:           0,
+// 		KEY_SENSOR_STATES:   d.SensorStates,
+// 		KEY_CONNECTION_TYPE: d.ConnectionType,
+// 		KEY_LAST_RESET_TIME: d.LastResetUnix,
+// 		KEY_GATEWAY_SERIAL:  gatewaySerial,
+// 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
+// 	}
+// 	maps.Copy(ret, d.Sps.ToMap("_t"))
+// 	maps.Copy(ret, d.Sps.ToMap("_b"))
+// 	maps.Copy(ret, d.Sps.ToMap("_m"))
+// 	maps.Copy(ret, d.Htu.ToMap())
+// 	maps.Copy(ret, d.Scd.ToMap())
+// 	maps.Copy(ret, d.TempRh.ToMap())
+// 	maps.Copy(ret, d.Mprls.ToMap())
+// 	maps.Copy(ret, d.Sgp.ToMap())
+// 	maps.Copy(ret, d.RadioMeta.ToMap())
+// 	if d.piMcuTempSet {
+// 		ret[KEY_PI_MCU_TEMP] = d.PiMcuTemp
+// 	}
 
-	return ret
+// 	return ret
+// }
+
+func (d *DuetDataMk4Var27) ToMap(gatewaySerial string) map[string]any {
+    ret := map[string]any{
+        KEY_DEVICE_TYPE:     4.27,
+        KEY_SERIAL_NUMBER:   d.SerialNumber,
+        KEY_DEVICE_ID:       d.SerialNumber,
+        KEY_UNIX:            d.UnixSec,
+        KEY_ECO2:            0,
+        KEY_RAWH2:           0,
+        KEY_SENSOR_STATES:   d.SensorStates,
+        KEY_CONNECTION_TYPE: d.ConnectionType,
+        KEY_LAST_RESET_TIME: d.LastResetUnix,
+        KEY_GATEWAY_SERIAL:  gatewaySerial,
+        KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
+    }
+    
+    maps.Copy(ret, d.Sps.ToMap("_t"))
+    maps.Copy(ret, d.Sps.ToMap("_b"))
+    maps.Copy(ret, d.Sps.ToMap("_m"))
+    maps.Copy(ret, d.Htu.ToMap())
+    maps.Copy(ret, d.Scd.ToMap())
+    maps.Copy(ret, d.TempRh.ToMap())
+    maps.Copy(ret, d.Mprls.ToMap())
+    maps.Copy(ret, d.Sgp.ToMap())
+    
+    // Add PID to the map export
+    if pidMap := d.Pid.ToMap(); pidMap != nil { // Adjust if you do maps.Copy(ret, d.Pid.ToMap()) directly
+        maps.Copy(ret, pidMap)
+    }
+    
+    maps.Copy(ret, d.RadioMeta.ToMap())
+    
+    if d.piMcuTempSet {
+        ret[KEY_PI_MCU_TEMP] = d.PiMcuTemp
+    }
+
+    return ret
 }
