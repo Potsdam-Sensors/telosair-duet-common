@@ -15,7 +15,7 @@ import (
 /* ~~ MK4 Var 27 ~~ */
 var DuetTypeMk4Var27 = DuetTypeInfo{
 	ExpectedBytes:        62,
-	ExpectedStringLen:    17,
+	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var27{} },
 	TypeAlias:            "Mk4.27",
 }
@@ -109,8 +109,8 @@ func (d *DuetDataMk4Var27) RecalculateLastResetUnix() {
 }
 
 func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
-    if len(splitStr) < 15 {
-        return fmt.Errorf("insufficient data points: got %d, want at least 15", len(splitStr))
+    if len(splitStr) < 14 {
+        return fmt.Errorf("insufficient data points: got %d, want at least 14", len(splitStr))
     }
 
     // Serial Number [0]
@@ -193,15 +193,15 @@ func (d *DuetDataMk4Var27) doPopulateFromSubStrings(splitStr []string) error {
     }
 
     // PoE / USB Voltage [13]
-    if voltage, err := strconv.ParseUint(splitStr[13], 10, 8); err != nil {
-        return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[13])
+    if voltage, err := strconv.ParseUint(splitStr[12], 10, 8); err != nil {
+        return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[12])
     } else {
         d.PoeUsbVoltage = uint8(voltage)
     }
 
     // Sensor States [14]
-    if sensorStates, err := strconv.ParseUint(splitStr[14], 10, 8); err != nil {
-        return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[14])
+    if sensorStates, err := strconv.ParseUint(splitStr[13], 10, 8); err != nil {
+        return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[13])
     } else {
         d.SensorStates = uint8(sensorStates)
     }
@@ -235,6 +235,12 @@ func (d *DuetDataMk4Var27) doPopulateFromBytes(buff []byte) error {
 	if err := binary.Read(reader, binary.LittleEndian, &d.Mprls.Pressure); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Pid.RawMV); err != nil {
+		return fmt.Errorf("error converting bytes to float (Pid.RawMV): %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Pid.EvMV); err != nil {
+		return fmt.Errorf("error converting bytes to float (Pid.EvMV): %w", err)
+	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 
 	return nil
@@ -264,7 +270,6 @@ func (d *DuetDataMk4Var27) ToMap(gatewaySerial string) map[string]any {
     maps.Copy(ret, d.Mprls.ToMap())
     maps.Copy(ret, d.Sgp.ToMap())
     
-    // Add PID to the map export
     if pidMap := d.Pid.ToMap(); pidMap != nil { // Adjust if you do maps.Copy(ret, d.Pid.ToMap()) directly
         maps.Copy(ret, pidMap)
     }
