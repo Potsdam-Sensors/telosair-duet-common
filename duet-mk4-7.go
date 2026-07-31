@@ -16,6 +16,10 @@ var DuetTypeMk4Var7 = DuetTypeInfo{
 	TypeAlias:            "Mk4.7",
 }
 
+type BLEPacker interface {
+	ToBLEBytes() []byte
+}
+
 type DuetDataMk4Var7 struct {
 	SerialNumber   uint16
 	SampleTimeMs   uint32
@@ -36,6 +40,46 @@ type DuetDataMk4Var7 struct {
 	RadioMeta RadioMetadata
 
 	timeResolved bool
+}
+
+func (d *DuetDataMk4Var7) ToBLEBytes() []byte {
+	buf := make([]byte, 21)
+
+	// 0-1: SCD41 CO2 (uint16)
+	binary.LittleEndian.PutUint16(buf[0:2], d.Scd.Co2)
+
+	// 2-3: SCD41 Temp (int16 * 100)
+	scdTemp := int16(d.Scd.Temp * 100)
+	binary.LittleEndian.PutUint16(buf[2:4], uint16(scdTemp))
+
+	// 4-5: SCD41 Hum (uint16 * 10)
+	scdHum := uint16(d.Scd.Hum * 10)
+	binary.LittleEndian.PutUint16(buf[4:6], scdHum)
+
+	// 6-7: MPRLS Pressure (uint16 * 10)
+	pressure := uint16(d.Mprls.Pressure * 10)
+	binary.LittleEndian.PutUint16(buf[6:8], pressure)
+
+	// 8-9: SGP40 VOC (uint16)
+	binary.LittleEndian.PutUint16(buf[8:10], uint16(d.Sgp.VocIndex))
+
+	// 10: Sensor States (uint8)
+	buf[10] = d.SensorStates
+
+	// 11-16: PM Measurements (SPS30)
+	binary.LittleEndian.PutUint16(buf[11:13], uint16(d.Sps.PM1))
+	binary.LittleEndian.PutUint16(buf[13:15], uint16(d.Sps.PM2p5))
+	binary.LittleEndian.PutUint16(buf[15:17], uint16(d.Sps.PM10))
+
+	// 17-18: Combined Temp (int16 * 100)
+	combTemp := int16(d.TempRh.Temp * 100)
+	binary.LittleEndian.PutUint16(buf[17:19], uint16(combTemp))
+
+	// 19-20: Combined Hum (uint16 * 10)
+	combHum := uint16(d.TempRh.Hum * 10)
+	binary.LittleEndian.PutUint16(buf[19:21], combHum)
+
+	return buf
 }
 
 func (d *DuetDataMk4Var7) TimeResolved() bool {
@@ -232,4 +276,45 @@ func (d *DuetDataMk4Var7) ToMap(gatewaySerial string) map[string]any {
 	}
 
 	return ret
+}
+
+func (d *DuetDataMk4Var7) GetRequiredSensorFiles() []string {
+	return []string{
+		"scd41/co2",
+		"scd41/temperature",
+		"scd41/humidity",
+		"mprls/pressure",
+		"sgp40/voc_index",
+		"sensor_states",
+		"pms5003/pm1",
+		"pms5003/pm25",
+		"pms5003/pm10",
+		"combined_temp_rh/temperature",
+		"combined_temp_rh/humidity",
+	}
+}
+
+func (d *DuetDataMk4Var7) PopulateFromLocalFiles(data map[string]string) {
+	// Quick inline helper functions to avoid crashing on empty strings
+	parseFloatSafe := func(s string) float64 { val, _ := strconv.ParseFloat(s, 32); return val }
+	parseIntSafe := func(s string) int64 { val, _ := strconv.ParseInt(s, 10, 32); return val }
+
+	d.Scd.Co2 = uint16(parseIntSafe(data["scd41/co2"]))
+	d.Scd.Temp = float32(parseFloatSafe(data["scd41/temperature"]))
+	d.Scd.Hum = float32(parseFloatSafe(data["scd41/humidity"]))
+
+	d.Mprls.Pressure = float32(parseFloatSafe(data["mprls/pressure"]))
+	d.Sgp.VocIndex = uint32(parseIntSafe(data["sgp40/voc_index"]))
+	d.SensorStates = uint8(parseIntSafe(data["sensor_states"]))
+
+	// d.Sps.PM1 = float32(parseFloatSafe(data["pms5003/pm1"]))
+	// d.Sps.PM2p5 = float32(parseFloatSafe(data["pms5003/pm25"]))
+	// d.Sps.PM10 = float32(parseFloatSafe(data["pms5003/pm10"]))
+
+	d.Sps.PM1 = uint16(parseIntSafe(data["pms5003/pm1"]))
+	d.Sps.PM2p5 = uint16(parseIntSafe(data["pms5003/pm25"]))
+	d.Sps.PM10 = uint16(parseIntSafe(data["pms5003/pm10"]))
+
+	d.TempRh.Temp = float32(parseFloatSafe(data["combined_temp_rh/temperature"]))
+	d.TempRh.Hum = float32(parseFloatSafe(data["combined_temp_rh/humidity"]))
 }

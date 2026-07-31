@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	KEY_PID_RAW_MV = "pid_raw_mv"
+	KEY_PID_RAW_MV = "pidx004"
 	KEY_PID_EV    = "pid_ev"
 	
 )
