@@ -218,10 +218,12 @@ func (typeInfo DuetTypeInfo) checkSubstringLen(n int) error {
 }
 
 func WriteDuetDataToDir(d DuetData, dir string) error {
+	StoreDeviceType(d.GetTypeInfo().TypeAlias, dir)
 	for _, m := range d.SensorMeasurements() {
 		if err := StoreSensorData(m, dir); err != nil {
 			return err
 		}
 	}
 	return nil
+
 }

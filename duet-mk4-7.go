@@ -16,9 +16,9 @@ var DuetTypeMk4Var7 = DuetTypeInfo{
 	TypeAlias:            "Mk4.7",
 }
 
-type BLEPacker interface {
-	ToBLEBytes() []byte
-}
+// type BLEPacker interface {
+// 	ToBLEBytes() []byte
+// }
 
 type DuetDataMk4Var7 struct {
 	SerialNumber   uint16
