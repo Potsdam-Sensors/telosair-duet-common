@@ -10,8 +10,8 @@ import (
 
 /* ~~ MK4 Var 26 - One SPS30 - One PMS5003 ~~ */
 var DuetTypeMk4Var26 = DuetTypeInfo{
-	ExpectedBytes:        88,
-	ExpectedStringLen:    15,
+	ExpectedBytes:        92,
+	ExpectedStringLen:    16,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var26{} },
 	TypeAlias:            "Mk4.26",
 }
@@ -36,6 +36,7 @@ type DuetDataMk4Var26 struct {
 	Mprls     MprlsMeasurement
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
+	Co        float32
 
 	timeResolved bool
 }
@@ -64,8 +65,8 @@ func (d *DuetDataMk4Var26) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var26) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.26 | Unix %d | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PMS: %s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
-		d.SerialNumber, d.UnixSec, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Pt.String(), d.Sps.String(),
+	return fmt.Sprintf("[Duet %d, Type 4.26 | Unix %d | Co %.2f |%s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PMS: %s | SPS: %s | Radio: %s | Errstate %d | PoE Voltage %d]",
+		d.SerialNumber, d.UnixSec, d.Co, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Pt.String(), d.Sps.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
 func (d *DuetDataMk4Var26) GetTypeInfo() DuetTypeInfo {
@@ -93,6 +94,7 @@ func (d *DuetDataMk4Var26) RecalculateLastResetUnix() {
 
 func (d *DuetDataMk4Var26) doPopulateFromSubStrings(splitStr []string) error {
 	cur := 0
+
 	// Serial Number
 	sn, err := strconv.ParseUint(splitStr[cur], 10, 16)
 	if err != nil {
@@ -159,6 +161,16 @@ func (d *DuetDataMk4Var26) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	cur++
 
+	// CO
+	if splitStr[cur] == "ovf" {
+		d.Co = 0
+	} else if co, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert CO string, %s, to float32", splitStr[cur])
+	} else {
+		d.Co = float32(co)
+	}
+	cur++
+
 	// VOC Index
 	if voc, err := strconv.ParseUint(splitStr[cur], 10, 32); err != nil {
 		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[cur])
@@ -196,7 +208,6 @@ func (d *DuetDataMk4Var26) doPopulateFromSubStrings(splitStr []string) error {
 
 	return nil
 }
-
 func (d *DuetDataMk4Var26) doPopulateFromBytes(buff []byte) error {
 	d.SensorStates = buff[0]
 	d.PoeUsbVoltage = buff[1]
@@ -204,7 +215,6 @@ func (d *DuetDataMk4Var26) doPopulateFromBytes(buff []byte) error {
 	d.Scd.Co2 = binary.LittleEndian.Uint16(buff[4:6])
 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
-
 	reader := bytes.NewReader(buff[14:34])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
@@ -227,28 +237,33 @@ func (d *DuetDataMk4Var26) doPopulateFromBytes(buff []byte) error {
 	if err := d.Sps.PopulateFromBytes(buff[52:70]); err != nil {
 		return fmt.Errorf("error parsing bytes for SPS: %w", err)
 	}
+	// CO
+	reader = bytes.NewReader(buff[70:74])
+	if err := binary.Read(reader, binary.LittleEndian, &d.Co); err != nil {
+		return fmt.Errorf("error converting CO bytes to float: %w", err)
+	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 	MergePT(&d.Pt, &d.Sps, &d.PtM)
-
 	return nil
 }
+
 func (d *DuetDataMk4Var26) ToMap(gatewaySerial string) map[string]any {
 	ret := map[string]any{
-		KEY_DEVICE_TYPE:     4.26,
-		KEY_SERIAL_NUMBER:   d.SerialNumber,
-		KEY_DEVICE_ID:       d.SerialNumber,
-		KEY_UNIX:            d.UnixSec,
-		KEY_ECO2:            0,
-		KEY_RAWH2:           0,
+		KEY_DEVICE_TYPE:   4.26,
+		KEY_SERIAL_NUMBER: d.SerialNumber,
+		KEY_DEVICE_ID:     d.SerialNumber,
+		KEY_UNIX:          d.UnixSec,
+		KEY_ECO2:          0, KEY_RAWH2: 0,
 		KEY_SENSOR_STATES:   d.SensorStates,
 		KEY_CONNECTION_TYPE: d.ConnectionType,
 		KEY_LAST_RESET_TIME: d.LastResetUnix,
 		KEY_GATEWAY_SERIAL:  gatewaySerial,
 		KEY_POE_USB_VOLTAGE: d.PoeUsbVoltage,
-	}
-	maps.Copy(ret, d.Pt.ToMap("_t"))
-	maps.Copy(ret, d.Sps.ToMap("_b"))
-	maps.Copy(ret, d.PtM.ToMap("_m"))
+		KEY_GAS_CO:          d.Co}
+
+	maps.Copy(ret, d.Pt.ToMap("_pms"))
+	maps.Copy(ret, d.Sps.ToMap("_sps"))
+	maps.Copy(ret, d.PtM.ToMap("_mer"))
 	maps.Copy(ret, d.Htu.ToMap())
 	maps.Copy(ret, d.Scd.ToMap())
 	maps.Copy(ret, d.TempRh.ToMap())
@@ -258,6 +273,5 @@ func (d *DuetDataMk4Var26) ToMap(gatewaySerial string) map[string]any {
 	if d.piMcuTempSet {
 		ret[KEY_PI_MCU_TEMP] = d.PiMcuTemp
 	}
-
 	return ret
 }
