@@ -1,0 +1,271 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"os"
+	"os/signal"
+	"strconv"
+	"strings"
+	"sync"
+	"syscall"
+	"time"
+
+	duet "github.com/Potsdam-Sensors/telosair-duet-common"
+)
+
+const FLAG_PI_MCU_TEMP_INHIBIT = "/usr/share/telosair/no_mcu_temp.flag"
+
+const USE_REST_UPLOAD = false
+const SERIAL_NUMBER_DEBUG = false
+const DEBUG_TIME = false
+
+var SERIAL_NUMBER string // Pi MCU serial number
+var DO_COLLECT_PI_MCU_TEMP bool
+var DUET_INFO *InfoMsg
+var DUET_TIME *UnixTimeMsg
+var BOOT_HASH string
+
+var TIMEKEEPING *Timekeeping = &Timekeeping{
+	DuetInfo:     &DUET_INFO,
+	DuetUnixTime: &DUET_TIME,
+}
+
+func printlnf(format string, args ...any) {
+	println(fmt.Sprintf(format, args...))
+}
+
+/*
+Get the serial number from the Pi and return it.
+*/
+func getSerialNumber() (string, error) {
+	if DEBUG_NOT_PI {
+		return "12345678", nil
+	}
+
+	// Using processor SN
+	f, err := os.Open("/proc/cpuinfo")
+	if err != nil {
+		return "", fmt.Errorf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	/* Read the file containing processor info and scrape it for the SN */
+	readbuff := make([]byte, 2048)
+	_, err = f.Read(readbuff)
+	if err != nil {
+		return "", fmt.Errorf("error reading file: %v", err)
+	}
+	for _, line := range bytes.Split(readbuff, []byte("\n")) {
+		if SERIAL_NUMBER_DEBUG {
+			fmt.Printf("%s\r\n", line)
+		}
+		if bytes.Contains(line, []byte("Serial")) {
+			lineSplit := bytes.Split(line, []byte(" "))
+			return string(lineSplit[len(lineSplit)-1]), nil
+		}
+	}
+
+	return "", fmt.Errorf("failed to find serial number")
+}
+
+func getBootHash() (string, error) {
+	if DEBUG_NOT_PI {
+		return "abcdef123", nil
+	}
+
+	f, err := os.Open("/proc/sys/kernel/random/boot_id")
+	if err != nil {
+		return "", fmt.Errorf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	buf, err := io.ReadAll(f)
+	if err != nil {
+		return "", fmt.Errorf("error reading file: %v", err)
+	}
+
+	return strings.TrimSpace(string(buf)), nil
+}
+
+/*
+Get the Pi's MCU temperature from the filesystem and return it.
+*/
+func getMcuTemp() (float32, error) {
+	if DEBUG_NOT_PI {
+		return 0, nil
+	}
+
+	// Using sysfs to get MCU temp
+	f, err := os.Open("/sys/class/thermal/thermal_zone0/temp")
+	if err != nil {
+		return 0.0, fmt.Errorf("error opening file: %w", err)
+	}
+	defer f.Close()
+
+	/* Read the file and try to interpret as number */
+	readbuff := make([]byte, 56)
+	n, err := f.Read(readbuff)
+	if err != nil {
+		return 0.0, fmt.Errorf("error reading file: %w", err)
+	}
+
+	val, err := strconv.Atoi(string(bytes.TrimSpace(readbuff[:n])))
+	if err != nil {
+		return 0.0, fmt.Errorf("error interpreting file contents as int: %w", err)
+	}
+
+	return (float32(val) / 1000), nil
+}
+
+func checkMcuTempFlag() bool {
+	_, err := os.Stat(FLAG_PI_MCU_TEMP_INHIBIT)
+	return (err != nil) && os.IsNotExist(err)
+}
+
+/*
+Set everything up and then monitor each of the goroutines for failure or for a system signal to shutdown.
+In either case, shut down all of the other goroutines and exit, allowing systemd to pick us back up for restart.
+*/
+func main() {
+	if DEBUG_NOT_PI || DEBUG_NO_UPLOAD {
+		printlnf("DEBUG MODE ONLY")
+	}
+
+	// Make sure we have been provided a serial port path
+	if len(os.Args) < 2 {
+		printlnf("Missing argument for serial path.")
+		os.Exit(1)
+	}
+	portPath := os.Args[1]
+	printlnf("Starting with port path \"%s\".", portPath)
+
+	if bounds, err := duet.ReadBinBoundaries(portPath, "B", 45*time.Second, DEBUG_NOT_PI); err != nil {
+		printlnf("Failed to read bin boundaries: %v", err)
+	} else {
+		printlnf("Board Bin Boundaries: %v", bounds)
+		if err := duet.SaveBinBoundariesToFile(duet.BinBoundsFilePath, bounds); err != nil {
+			printlnf("Error saving bin boundaries: %v", err)
+		} else {
+			printlnf("Successfully wrote bin boundaries to %s", duet.BinBoundsFilePath)
+		}
+
+		// Send to Kafka
+		if err := UploadBootMetadata(SERIAL_NUMBER, bounds); err != nil {
+			printlnf("Error sending boot metadata to Kafka: %v", err)
+		}
+	}
+	// Grab the Pi MCU serial number and store it globally.
+	if sn, err := getSerialNumber(); err != nil {
+		fmt.Printf("Failed to get serial number due to error: %v\r\n", err)
+		os.Exit(1)
+	} else {
+		printlnf("Serial Number: %s", sn)
+		SERIAL_NUMBER = sn
+	}
+
+	// Get the boot hash for global
+	if hash, err := getBootHash(); err != nil {
+		panic(fmt.Errorf("failed to get boot hash: %w", err))
+	} else {
+		printlnf("Boot Hash: %s", hash)
+		BOOT_HASH = hash
+	}
+
+	// Check to see if we need to do pi mcu temperatures
+	DO_COLLECT_PI_MCU_TEMP = checkMcuTempFlag()
+	printlnf("Collect MCU Temp: %v", DO_COLLECT_PI_MCU_TEMP)
+
+	// Set up a signal handler for SIGTERM
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM)
+
+	// Context for gracefully ending goroutines when SIGTERM recieved or goroutine failure
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var wg sync.WaitGroup
+
+	if r, err := CheckNtpSynchronized(); err != nil {
+		printlnf("Error checking if NTP synced: %v", err)
+	} else {
+		TIMEKEEPING.NtpSync = &r
+		if r {
+			printlnf("NTP Synced.")
+		}
+	}
+	if (TIMEKEEPING.NtpSync == nil) || !(*TIMEKEEPING.NtpSync) {
+		wg.Add(1)
+		go GoWaitNtpSynced(ctx, &wg, time.Second*5)
+	}
+
+	// For children to let us know they've died
+	serialExit := make(chan interface{}, 1)
+	uploaderExit := make(chan interface{}, 1)
+	writerExit := make(chan interface{}, 1)
+
+	// Uploader channel to connect serial input to kafka output
+	outputMsgChan := make(chan duet.DuetData, 100)
+	writerMsgChan := make(chan duet.DuetData, 100)
+
+	// Info msg chan
+	otherMsgChan := make(chan NonDataMessage, 20)
+
+	// Mount the image once for the whole application life
+	if !DEBUG_NOT_PI {
+		if err := mount(); err != nil {
+			panic(err)
+		}
+		defer unmount()
+	}
+
+	// Spawn children with all the fixings
+	wg.Add(1)
+	go GoSerial(ctx, &wg, serialExit, portPath, outputMsgChan, writerMsgChan, otherMsgChan)
+
+	wg.Add(1)
+	go GoStoreDuetData(ctx, &wg, writerExit, writerMsgChan)
+
+	if !DEBUG_NO_UPLOAD {
+		if USE_REST_UPLOAD {
+			printlnf("Starting REST uploader.")
+			go GoUploaderRestApi(ctx, &wg, uploaderExit, outputMsgChan)
+			wg.Add(1)
+		} else {
+			printlnf("Starting kafka uploader.")
+			go GoUploader(ctx, &wg, uploaderExit, outputMsgChan)
+			wg.Add(1)
+		}
+	} else {
+		printlnf("Not uploading anything -- debug mode.")
+	}
+
+	/*
+		Patiently wait for something to happen:
+			- A goroutine failure (and death)
+			- A SIGTERM from the OS
+
+		Then break out of the select and proceed
+	*/
+	select {
+	case <-sigs:
+		printlnf("SIGTERM recieved, ending goroutines.")
+		break
+	case err := <-serialExit:
+		printlnf("Serial goroutine exited with error: %v", err)
+		break
+	case err := <-uploaderExit:
+		printlnf("Uploader goroutine exited with error: %v", err)
+		break
+	case err := <-writerExit:
+		printlnf("Data writer goroutine exited with error: %v", err)
+		break
+	}
+
+	// Send the cancel signal to all children and wait for them to exit, then exit this program.
+	printlnf("Ending children goroutines.")
+	cancel()
+	printlnf("Waiting for children to exit.")
+	wg.Wait()
+}

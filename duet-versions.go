@@ -1,9 +1,12 @@
 package telosairduetcommon
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type DuetData interface {
@@ -197,11 +200,26 @@ func DuetDataFromSerialString(s string, recievedUnixSec uint32, receivedTimeOk b
 	return d, nil
 }
 
+type VariantInitContext struct {
+	Writer       io.Writer
+	Scanner      *bufio.Scanner
+	Timeout      time.Duration
+	IsDebug      bool
+	SerialNumber string
+
+	// Kept here because future boards might also need to upload boot metadata to Kafka
+	UploadBootMetadata func(serial string, bounds []float32) error
+}
+
 type DuetTypeInfo struct {
+	Major                uint8
+	Variant              uint8
 	ExpectedBytes        int
 	ExpectedStringLen    int
 	StructInstanceGetter func() DuetData
 	TypeAlias            string
+
+	RunVariantConfig func(ctx VariantInitContext) error
 }
 
 func (typeInfo DuetTypeInfo) checkByteLen(byteLen int) error {

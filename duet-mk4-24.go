@@ -1,19 +1,59 @@
 package telosairduetcommon
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"io"
 	"maps"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 )
+
+const Mk4Var24BinBoundsPath = "/var/run/sensor_data/opc_bin_bounds.json"
 
 /* ~~ MK4 Var 24 - One OPC-N3 ~~ */
 var DuetTypeMk4Var24 = DuetTypeInfo{
+	Major:                4,
+	Variant:              24,
 	ExpectedBytes:        152,
 	ExpectedStringLen:    19,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var24{} },
 	TypeAlias:            "Mk4.24",
+	RunVariantConfig: func(ctx VariantInitContext) error {
+		fmt.Printf("[%s] Running variant-specific configuration...\n", "Mk4.24")
+
+		bounds, err := ReadBinBoundaries(ctx.Writer, ctx.Scanner, "B", ctx.Timeout, ctx.IsDebug)
+		if err != nil {
+			return fmt.Errorf("failed to read bin boundaries: %w", err)
+		}
+
+		// Use the variant's own hardcoded path!
+		if err := SaveBinBoundariesToFile(Mk4Var24BinBoundsPath, bounds); err != nil {
+			fmt.Printf("Error saving bin boundaries: %v\n", err)
+		} else {
+			fmt.Printf("Successfully wrote bin boundaries to %s\n", Mk4Var24BinBoundsPath)
+		}
+
+		if ctx.UploadBootMetadata != nil {
+			if err := ctx.UploadBootMetadata(ctx.SerialNumber, bounds); err != nil {
+				fmt.Printf("Error sending boot metadata to Kafka: %v\n", err)
+			}
+		}
+
+		return nil
+	},
+}
+
+// Add this right below your DuetTypeMk4Var24 definition
+var SupportedVariants = []DuetTypeInfo{
+	DuetTypeMk4Var24,
+	// You can add any future variants here (e.g. Mk5.10)
 }
 
 type DuetDataMk4Var24 struct {
@@ -299,4 +339,201 @@ func (d *DuetDataMk4Var24) ToMap(gatewaySerial string) map[string]any {
 	}
 
 	return ret
+}
+func ReadBinBoundaries(
+	writer io.Writer,
+	scanner *bufio.Scanner,
+	command string,
+	timeout time.Duration,
+	isDebug bool,
+) ([]float32, error) {
+
+	if isDebug {
+		return []float32{
+			0.35, 0.46, 0.66, 1.0, 1.3, 1.7,
+			2.3, 3.0, 4.0, 5.2, 6.5, 8.0, 10.0,
+		}, nil
+	}
+
+	if _, err := writer.Write([]byte(command + "\n")); err != nil {
+		return nil, fmt.Errorf("failed to write query command: %w", err)
+	}
+
+	fmt.Printf("[BinBounds] Sending command: %q\n", command+"\n")
+
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+
+		if !scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				fmt.Printf("[BinBounds] Scanner error: %v\n", err)
+			} else {
+				fmt.Printf("[BinBounds] Scanner returned false with no error\n")
+			}
+
+			// The scanner can't recover itself after Scan() returns false.
+			// We need to reconstruct it from the underlying reader.
+			reader, ok := writer.(io.Reader)
+			if !ok {
+				return nil, fmt.Errorf(
+					"serial writer does not implement io.Reader",
+				)
+			}
+
+			*scanner = *bufio.NewScanner(reader)
+
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+
+		line := strings.TrimSpace(scanner.Text())
+
+		fmt.Printf("[BinBounds] Received: %q\n", line)
+
+		if !strings.Contains(line, "DIAMETERS:") {
+			continue
+		}
+
+		parts := strings.Split(line, ";")
+
+		var diametersStr string
+
+		for _, part := range parts {
+			if strings.HasPrefix(part, "DIAMETERS:") {
+				diametersStr = strings.TrimPrefix(part, "DIAMETERS:")
+				break
+			}
+		}
+
+		if diametersStr == "" {
+			return nil, fmt.Errorf(
+				"received DIAMETERS line but payload was empty: %s",
+				line,
+			)
+		}
+
+		rawBounds := strings.Split(diametersStr, ",")
+		bounds := make([]float32, 0, len(rawBounds))
+
+		for _, raw := range rawBounds {
+			val, err := strconv.ParseFloat(strings.TrimSpace(raw), 32)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"invalid bin value %q: %w",
+					raw,
+					err,
+				)
+			}
+
+			bounds = append(bounds, float32(val)/100.0)
+		}
+
+		return bounds, nil
+	}
+
+	return nil, fmt.Errorf(
+		"timed out waiting for OPC bin boundaries after %v",
+		timeout,
+	)
+}
+
+// // Notice the updated signature: we drop portPath and accept writer & scanner
+// func ReadBinBoundaries(writer io.Writer, scanner *bufio.Scanner, command string, timeout time.Duration, isDebug bool) ([]float32, error) {
+// 	if isDebug {
+// 		return []float32{0.35, 0.46, 0.66, 1.0, 1.3, 1.7, 2.3, 3.0, 4.0, 5.2, 6.5, 8.0, 10.0}, nil
+// 	}
+
+// 	type response struct {
+// 		data []float32
+// 		err  error
+// 	}
+// 	ch := make(chan response, 1)
+
+// 	go func() {
+// 		cmd := []byte(command + "\n")
+// 		fmt.Printf("[BinBounds] Sending command: %q\n", cmd)
+
+// 		// 1. Send query command to daughterboard using the shared writer
+// 		_, err := writer.Write(cmd)
+// 		if err != nil {
+// 			ch <- response{err: fmt.Errorf("failed to write query command: %w", err)}
+// 			return
+// 		}
+
+// 		// 2. Scan lines continuously using the SHARED scanner
+// 		// (We do not call bufio.NewScanner(f) here anymore!)
+// 		for scanner.Scan() {
+// 			line := strings.TrimSpace(scanner.Text())
+
+// 			// Skip boot splash lines (e.g. "init ok!")
+// 			if !strings.HasPrefix(line, "B;CONF") && !strings.Contains(line, "DIAMETERS:") {
+// 				continue
+// 			}
+
+// 			parts := strings.Split(line, ";")
+// 			var diametersStr string
+// 			for _, part := range parts {
+// 				if strings.HasPrefix(part, "DIAMETERS:") {
+// 					diametersStr = strings.TrimPrefix(part, "DIAMETERS:")
+// 					break
+// 				}
+// 			}
+
+// 			if diametersStr == "" {
+// 				ch <- response{err: fmt.Errorf("received B;CONF line but could not locate DIAMETERS payload: %s", line)}
+// 				return
+// 			}
+
+// 			// Split the extracted DIAMETERS substring: "35,46,66,100..."
+// 			rawBounds := strings.Split(diametersStr, ",")
+// 			bounds := make([]float32, 0, len(rawBounds))
+
+// 			for _, raw := range rawBounds {
+// 				val, err := strconv.ParseFloat(strings.TrimSpace(raw), 32)
+// 				if err != nil {
+// 					ch <- response{err: fmt.Errorf("invalid bin value '%s': %w", raw, err)}
+// 					return
+// 				}
+// 				// Convert integer diameters to micrometers (e.g., 35 -> 0.35 um)
+// 				bounds = append(bounds, float32(val)/100.0)
+// 			}
+
+// 			ch <- response{data: bounds}
+// 			return
+// 		}
+
+// 		if err := scanner.Err(); err != nil {
+// 			ch <- response{err: err}
+// 			return
+// 		}
+
+// 		ch <- response{err: fmt.Errorf("EOF reached without finding bin boundaries")}
+// 	}()
+
+// 	select {
+// 	case res := <-ch:
+// 		return res.data, res.err
+// 	case <-time.After(timeout):
+// 		return nil, fmt.Errorf("timed out waiting for bin boundaries after %v", timeout)
+// 	}
+// }
+
+// SaveBinBoundariesToFile writes the parsed bin boundaries to a local JSON file.
+func SaveBinBoundariesToFile(filePath string, bounds []float32) error {
+	data, err := json.MarshalIndent(bounds, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal bin boundaries: %w", err)
+	}
+
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write bin boundaries to %s: %w", filePath, err)
+	}
+
+	return nil
 }
