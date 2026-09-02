@@ -8,10 +8,29 @@ import (
 type AriaMeasurement struct {
 	ProtocolVersion uint8
 	McuSn string
-	BinBoundsUpper []uint16
-	BinCounts [][][]uint16
-	SampleUs[] uint32
-	OpcError[] uint8
+	BinBoundsUpper []uint16 // dimensions: [binCount]
+	BinCounts [][][]uint16	// dimensions: [blockCount][channelCount][binCount]
+	SampleUs[] uint32		// dimensions: [blockCount]
+	OpcError[] uint8		// dimensions: [blockCount]
+
+	BinCountsPerSecond [][][]float32 // dimensions: [blockCount][channelCount][binCount]
+}
+
+func (m *AriaMeasurement) ComputeBinCountsPerSecond() {
+	m.BinCountsPerSecond = make([][][]float32, len(m.BinCounts))
+	for b := range m.BinCounts {
+		m.BinCountsPerSecond[b] = make([][]float32, len(m.BinCounts[b]))
+		for c := range m.BinCounts[b] {
+			m.BinCountsPerSecond[b][c] = make([]float32, len(m.BinCounts[b][c]))
+			for i := range m.BinCounts[b][c] {
+				if m.SampleUs[b] > 0 {
+					m.BinCountsPerSecond[b][c][i] = float32(m.BinCounts[b][c][i]) * 1_000_000.0 / float32(m.SampleUs[b])
+				} else {
+					m.BinCountsPerSecond[b][c][i] = 0.0
+				}
+			}
+		}
+	}
 }
 
 func (m *AriaMeasurement) String() string {
@@ -23,9 +42,21 @@ Convert the sample to a map, adding the suffix to the end of each key.
 */
 func (m *AriaMeasurement) ToMap() map[string]any {
 	// TODO
-	return map[string]any{
+	ret := map[string]any{
 		"aria_sn": m.McuSn,
 	}
+
+	// Bins (float version) will be provided as aria_block_{blockNum}_ch_{channelNum}_bin_{binNum}
+	for b := range m.BinCountsPerSecond {
+		for c := range m.BinCountsPerSecond[b] {
+			for i := range m.BinCountsPerSecond[b][c] {
+				key := fmt.Sprintf("aria_block_%d_ch_%d_bin_%d", b, c, i)
+				ret[key] = m.BinCountsPerSecond[b][c][i]
+			}
+		}
+	}
+
+	return ret
 }
 
 const aria_split_str_len_min = 6
@@ -134,6 +165,8 @@ func (m *AriaMeasurement) PopulateFromSplitString(split []string) (int, error) {
 		m.OpcError[b] = uint8(val)
 		cur++
 	}
+
+	m.ComputeBinCountsPerSecond()
 
 	return cur, nil
 }
