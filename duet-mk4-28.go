@@ -9,7 +9,7 @@ import (
 /* ~~ MK4 Var 28 - Aria ~~ */
 var DuetTypeMk4Var28 = DuetTypeInfo{
 	ExpectedBytes:        88,
-	ExpectedStringLen:    15,
+	ExpectedStringLen:    45,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var28{} },
 	TypeAlias:            "Mk4.28",
 }
