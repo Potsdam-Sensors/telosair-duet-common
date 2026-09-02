@@ -134,6 +134,8 @@ func getTypeInfo(hwVer, snsVar uint8) (ret *DuetTypeInfo) {
 			ret = &DuetTypeMk4Var25
 		case 26:
 			ret = &DuetTypeMk4Var26
+		case 28:
+			ret = &DuetTypeMk4Var28
 		}
 	}
 	return
