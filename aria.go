@@ -46,11 +46,12 @@ func (m *AriaMeasurement) ToMap() map[string]any {
 		"aria_sn": m.McuSn,
 	}
 
-	// Bins (float version) will be provided as aria_block_{blockNum}_ch_{channelNum}_bin_{binNum}
+	// Bins (float version) will be provided as aria_ch{channelNum}_bin{binNum}
+	// We will assume there is only one block for now...
 	for b := range m.BinCountsPerSecond {
 		for c := range m.BinCountsPerSecond[b] {
 			for i := range m.BinCountsPerSecond[b][c] {
-				key := fmt.Sprintf("aria_block_%d_ch_%d_bin_%d", b, c, i)
+				key := fmt.Sprintf("aria_ch%d_bin%d", c, i)
 				ret[key] = m.BinCountsPerSecond[b][c][i]
 			}
 		}
