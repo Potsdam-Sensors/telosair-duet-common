@@ -43,7 +43,6 @@ Convert the sample to a map, adding the suffix to the end of each key.
 func (m *AriaMeasurement) ToMap() map[string]any {
 	// TODO
 	ret := map[string]any{
-		"aria_sn": m.McuSn,
 	}
 
 	// Bins (float version) will be provided as aria_ch{channelNum}_bin{binNum}
