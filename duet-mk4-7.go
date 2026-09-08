@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 7 - One SPS30 ~~ */
 var DuetTypeMk4Var7 = DuetTypeInfo{
-	ExpectedBytes:        70,
+	ExpectedBytes:        54,
 	ExpectedStringLen:    14,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var7{} },
 	TypeAlias:            "Mk4.7",

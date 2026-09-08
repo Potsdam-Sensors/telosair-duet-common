@@ -10,7 +10,7 @@ import (
 
 /* ~~ MK4 Var 24 - One OPC-N3 ~~ */
 var DuetTypeMk4Var24 = DuetTypeInfo{
-	ExpectedBytes:        152,
+	ExpectedBytes:        150,
 	ExpectedStringLen:    19,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var24{} },
 	TypeAlias:            "Mk4.24",
@@ -233,7 +233,7 @@ func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
 
-	reader := bytes.NewReader(buff[14:34])
+	reader := bytes.NewReader(buff[14:])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
@@ -263,6 +263,11 @@ func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
 	}
 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.PM10); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	for i := 0; i < 24; i++ {
+		if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Bins[i]); err != nil {
+			return fmt.Errorf("error converting OPC bin %d to float: %w", i, err)
+		}
 	}
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
