@@ -7,9 +7,10 @@ import (
 )
 
 type AlphasenseOpcN3Measurement struct {
-	PM1, PM2p5, PM10 float32
-	Temp, Rh         float32
-	Bins             [24]float32
+	PM1, PM2p5, PM10                          float32
+	Pn0_3, Pn0_5, Pn1_0, Pn2_5, Pn5_0, Pn10_0 float32
+	Temp, Rh                                  float32
+	Bins                                      [24]float32
 }
 
 func (m *AlphasenseOpcN3Measurement) PopulateBinsFromString(s string) error {
@@ -36,16 +37,23 @@ func (m AlphasenseOpcN3Measurement) DirectoryName() string {
 
 func (m AlphasenseOpcN3Measurement) DirectoryData() map[string]float32 {
 	return map[string]float32{
-		"PM1":   m.PM1,
-		"PM2.5": m.PM2p5,
-		"PM10":  m.PM10,
-		"TEMP":  m.Temp,
-		"RH":    m.Rh,
+		"PM1":    m.PM1,
+		"PM2.5":  m.PM2p5,
+		"PM10":   m.PM10,
+		"TEMP":   m.Temp,
+		"RH":     m.Rh,
+		"PN0.3":  m.Pn0_3,
+		"PN0.5":  m.Pn0_5,
+		"PN1.0":  m.Pn1_0,
+		"PN2.5":  m.Pn2_5,
+		"PN5.0":  m.Pn5_0,
+		"PN10.0": m.Pn10_0,
 	}
 }
 
 func (m AlphasenseOpcN3Measurement) String() string {
-	return fmt.Sprintf("PM1 %.2f, PM2.5 %.2f, PM10 %.2f, Temp %.2f, RH %.2f", m.PM1, m.PM2p5, m.PM10, m.Temp, m.Rh)
+	return fmt.Sprintf("PM1 %.2f, PM2.5 %.2f, PM10 %.2f, PN0.3 %.2f, PN0.5 %.2f, PN1.0 %.2f, PN2.5 %.2f, PN5.0 %.2f, PN10.0 %.2f, Temp %.2f, RH %.2f",
+		m.PM1, m.PM2p5, m.PM10, m.Pn0_3, m.Pn0_5, m.Pn1_0, m.Pn2_5, m.Pn5_0, m.Pn10_0, m.Temp, m.Rh)
 }
 
 func (m AlphasenseOpcN3Measurement) ToMapPm(suff string) map[string]any {
@@ -53,6 +61,17 @@ func (m AlphasenseOpcN3Measurement) ToMapPm(suff string) map[string]any {
 		"pm10" + suff:  m.PM1,
 		"pm25" + suff:  m.PM2p5,
 		"pm100" + suff: m.PM10,
+	}
+}
+
+func (m AlphasenseOpcN3Measurement) ToMapPn(suff string) map[string]any {
+	return map[string]any{
+		"pn03" + suff:  m.Pn0_3,
+		"pn05" + suff:  m.Pn0_5,
+		"pn10" + suff:  m.Pn1_0,
+		"pn25" + suff:  m.Pn2_5,
+		"pn50" + suff:  m.Pn5_0,
+		"pn100" + suff: m.Pn10_0,
 	}
 }
 

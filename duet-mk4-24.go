@@ -10,8 +10,8 @@ import (
 
 /* ~~ MK4 Var 24 - One OPC-N3 ~~ */
 var DuetTypeMk4Var24 = DuetTypeInfo{
-	ExpectedBytes:        152,
-	ExpectedStringLen:    19,
+	ExpectedBytes:        176,
+	ExpectedStringLen:    25,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var24{} },
 	TypeAlias:            "Mk4.24",
 }
@@ -89,10 +89,6 @@ func (d *DuetDataMk4Var24) RecalculateLastResetUnix() {
 	d.LastResetUnix = d.UnixSec - (d.SampleTimeMs / 1000)
 }
 
-/*
-Error converting data point, 4 24 4404 1831248 27.06 24.52 30.38 28.62 33.65 25.89 404.82 100 426 0.27 0.51 0.59 39 0
-: failed to populate for type Mk4.24: failed to convert voc index string, 25.89, to uint32
-*/
 func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	cur := 0
 	// Serial Number
@@ -179,7 +175,7 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	cur++
 
-	// OPC-N3 PM1, 2.5, 10 & Bins
+	// OPC-N3 PM1, 2.5, 10
 	if pm1, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
 		return fmt.Errorf("failed to convert opc pm1 string, %s, to float32", splitStr[cur])
 	} else {
@@ -201,6 +197,50 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	cur++
 
+	/* ~ Particle Numbers (PN) ~ */
+	if pn0_3, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn0_3 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn0_3 = float32(pn0_3)
+	}
+	cur++
+
+	if pn0_5, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn0_5 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn0_5 = float32(pn0_5)
+	}
+	cur++
+
+	if pn1_0, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn1_0 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn1_0 = float32(pn1_0)
+	}
+	cur++
+
+	if pn2_5, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn2_5 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn2_5 = float32(pn2_5)
+	}
+	cur++
+
+	if pn5_0, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn5_0 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn5_0 = float32(pn5_0)
+	}
+	cur++
+
+	if pn10_0, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+		return fmt.Errorf("failed to convert opc pn10_0 string, %s, to float32", splitStr[cur])
+	} else {
+		d.Opc.Pn10_0 = float32(pn10_0)
+	}
+	cur++
+
+	// OPC Bins
 	if err := d.Opc.PopulateBinsFromString(splitStr[cur]); err != nil {
 		return fmt.Errorf("failed to convert opcn3 bins: %v", err)
 	}
@@ -225,6 +265,189 @@ func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
 
 	return nil
 }
+
+/*
+Error converting data point, 4 24 4404 1831248 27.06 24.52 30.38 28.62 33.65 25.89 404.82 100 426 0.27 0.51 0.59 39 0
+: failed to populate for type Mk4.24: failed to convert voc index string, 25.89, to uint32
+*/
+// func (d *DuetDataMk4Var24) doPopulateFromSubStrings(splitStr []string) error {
+// 	cur := 0
+// 	// Serial Number
+// 	sn, err := strconv.ParseUint(splitStr[cur], 10, 16)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to convert DuetSerialNumber string, %s, to uint32", splitStr[cur])
+// 	}
+// 	d.SerialNumber = uint16(sn)
+// 	cur++
+
+// 	// Sample Time
+// 	st, err := strconv.ParseUint(splitStr[cur], 10, 32)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to convert SampleTime string, %s, to uint32", splitStr[cur])
+// 	}
+// 	d.SampleTimeMs = uint32(st)
+// 	cur++
+
+// 	// Temperatures (1 & 2 & 3)
+// 	if temp, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert htu temp string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Htu.Temp = float32(temp)
+// 	}
+// 	cur++
+
+// 	if temp, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert scd temp string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Scd.Temp = float32(temp)
+// 	}
+// 	cur++
+
+// 	if temp, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert opc temp string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Opc.Temp = float32(temp)
+// 	}
+// 	cur++
+
+// 	// Humidities (1 & 2 & 3)
+// 	if hum, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Htu.Hum = float32(hum)
+// 	}
+// 	cur++
+
+// 	if hum, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Scd.Hum = float32(hum)
+// 	}
+// 	cur++
+
+// 	if hum, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert opc hum string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Opc.Rh = float32(hum)
+// 	}
+// 	cur++
+
+// 	// Pressure
+// 	if press, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Mprls.Pressure = float32(press)
+// 	}
+// 	cur++
+
+// 	// VOC Index
+// 	if voc, err := strconv.ParseUint(splitStr[cur], 10, 32); err != nil {
+// 		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[cur])
+// 	} else {
+// 		d.Sgp.VocIndex = uint32(voc)
+// 	}
+// 	cur++
+
+// 	// CO2
+// 	if co2, err := strconv.ParseUint(splitStr[cur], 10, 16); err != nil {
+// 		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[cur])
+// 	} else {
+// 		d.Scd.Co2 = uint16(co2)
+// 	}
+// 	cur++
+
+// 	// OPC-N3 PM1, 2.5, 10 & Bins
+// 	if pm1, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert opc pm1 string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Opc.PM1 = float32(pm1)
+// 	}
+// 	cur++
+
+// 	if pm2p5, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert opc pm2.5 string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Opc.PM2p5 = float32(pm2p5)
+// 	}
+// 	cur++
+
+// 	if pm10, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
+// 		return fmt.Errorf("failed to convert opc pm10 string, %s, to float32", splitStr[cur])
+// 	} else {
+// 		d.Opc.PM10 = float32(pm10)
+// 	}
+// 	cur++
+
+// 	if err := d.Opc.PopulateBinsFromString(splitStr[cur]); err != nil {
+// 		return fmt.Errorf("failed to convert opcn3 bins: %v", err)
+// 	}
+// 	cur++
+
+// 	// PoE / USB Voltage
+// 	if voltage, err := strconv.ParseUint(splitStr[cur], 10, 8); err != nil {
+// 		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[cur])
+// 	} else {
+// 		d.PoeUsbVoltage = uint8(voltage)
+// 	}
+// 	cur++
+
+// 	// Sensor States
+// 	if sensorStates, err := strconv.ParseUint(splitStr[cur], 10, 8); err != nil {
+// 		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[cur])
+// 	} else {
+// 		d.SensorStates = uint8(sensorStates)
+// 	}
+// 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+// 	cur++
+
+// 	return nil
+// }
+
+// func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
+// 	d.SensorStates = buff[0]
+// 	d.PoeUsbVoltage = buff[1]
+// 	d.SerialNumber = binary.LittleEndian.Uint16(buff[2:4])
+// 	d.Scd.Co2 = binary.LittleEndian.Uint16(buff[4:6])
+// 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
+// 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
+
+// 	reader := bytes.NewReader(buff[14:34])
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Scd.Temp); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Hum); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Scd.Hum); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Mprls.Pressure); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Temp); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Rh); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.PM1); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.PM2p5); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+// 	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.PM10); err != nil {
+// 		return fmt.Errorf("error converting bytes to float: %w", err)
+// 	}
+
+// 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
+
+// 	return nil
+// }
+
 func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
 	d.SensorStates = buff[0]
 	d.PoeUsbVoltage = buff[1]
@@ -233,7 +456,7 @@ func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
 	d.Sgp.VocIndex = binary.LittleEndian.Uint32(buff[6:10])
 	d.SampleTimeMs = binary.LittleEndian.Uint32(buff[10:14])
 
-	reader := bytes.NewReader(buff[14:34])
+	reader := bytes.NewReader(buff[14:58])
 	if err := binary.Read(reader, binary.LittleEndian, &d.Htu.Temp); err != nil {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
@@ -265,10 +488,31 @@ func (d *DuetDataMk4Var24) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
 
+	/* ~ Particle Numbers (PN) ~ */
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn0_3); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn0_5); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn1_0); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn2_5); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn5_0); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+	if err := binary.Read(reader, binary.LittleEndian, &d.Opc.Pn10_0); err != nil {
+		return fmt.Errorf("error converting bytes to float: %w", err)
+	}
+
 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 
 	return nil
 }
+
 func (d *DuetDataMk4Var24) ToMap(gatewaySerial string) map[string]any {
 	ret := map[string]any{
 		KEY_DEVICE_TYPE:     4.24,
