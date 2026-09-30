@@ -10,8 +10,8 @@ import (
 
 /* ~~ MK4 Var 15 (Outdoor, 1 PT, 1 SPS, CO, O3, NO2) ~~ */
 var DuetTypeMk4Var15 = DuetTypeInfo{
-	ExpectedBytes:        108,
-	ExpectedStringLen:    17,
+	ExpectedBytes:        108, // TODO
+	ExpectedStringLen:    18,
 	StructInstanceGetter: func() DuetData { return &DuetDataMk4Var15{} },
 	TypeAlias:            "Mk4.15",
 }
@@ -37,7 +37,6 @@ type DuetDataMk4Var15 struct {
 	Sgp       Sgp40Measurement
 	RadioMeta RadioMetadata
 
-	Gas         GasSensorsMeasurement
 	Co, O3, No2 float32
 
 	timeResolved bool
@@ -57,7 +56,9 @@ func (d *DuetDataMk4Var15) ResolveTime(t uint32) {
 }
 
 func (d *DuetDataMk4Var15) SensorMeasurements() []SensorMeasurement {
-	return []SensorMeasurement{d.PtM, d.TempRh, d.Scd, d.Mprls, d.Sgp, &d.Gas, DuetSensorState{d.SensorStates}}
+	// TODO: PTM should not be used since PMS & SPS have different units
+	//		Also add back in gas pls <3
+	return []SensorMeasurement{d.PtM, d.TempRh, d.Scd, d.Mprls, d.Sgp, DuetSensorState{d.SensorStates}}
 }
 func (d *DuetDataMk4Var15) SetRadioData(v RadioMetadata) {
 	d.RadioMeta = v
@@ -67,7 +68,7 @@ func (d *DuetDataMk4Var15) SetPiMcuTemp(val float32) {
 	d.piMcuTempSet = true
 }
 func (d *DuetDataMk4Var15) String() string {
-	return fmt.Sprintf("[Duet %d, Type 4.15 | Unix %d | Co %.2f, O3: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PTs: 1[%s], 2[%s|, M[%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
+	return fmt.Sprintf("[Duet %d, Type 4.15 | Unix %d | Co %.2f, O3: %.2f, CH4: %.2f | %s | HTU: %s | SCD: %s | MPRLS: %s | SGP: %s | PTs: PT[%s], SPS[%s|, M[%s] | Radio: %s | Errstate %d | PoE Voltage %d]",
 		d.SerialNumber, d.UnixSec, d.Co, d.O3, d.No2, d.TempRh.String(), d.Htu.String(), d.Scd.String(), d.Mprls.String(), d.Sgp.String(), d.Pt1.String(), d.Pt2.String(), d.PtM.String(),
 		d.RadioMeta.String(), d.SensorStates, d.PoeUsbVoltage)
 }
@@ -135,71 +136,79 @@ func (d *DuetDataMk4Var15) doPopulateFromSubStrings(splitStr []string) error {
 
 	// Humidities (1 & 2)
 	if hum, err := strconv.ParseFloat(splitStr[6], 32); err != nil {
-		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[5])
+		return fmt.Errorf("failed to convert htu hum string, %s, to float32", splitStr[6])
 	} else {
 		d.Htu.Hum = float32(hum)
 	}
 
 	if hum, err := strconv.ParseFloat(splitStr[7], 32); err != nil {
-		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[5])
+		return fmt.Errorf("failed to convert scd hum string, %s, to float32", splitStr[7])
 	} else {
 		d.Scd.Hum = float32(hum)
 	}
 
 	// Pressure
 	if press, err := strconv.ParseFloat(splitStr[8], 32); err != nil {
-		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[5])
+		return fmt.Errorf("failed to convert pressure string, %s, to float32", splitStr[8])
 	} else {
 		d.Mprls.Pressure = float32(press)
 	}
 
 	// VOC Index
 	if voc, err := strconv.ParseUint(splitStr[9], 10, 32); err != nil {
-		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[5])
+		return fmt.Errorf("failed to convert voc index string, %s, to uint32", splitStr[9])
 	} else {
 		d.Sgp.VocIndex = uint32(voc)
 	}
 
 	// CO2
 	if co2, err := strconv.ParseUint(splitStr[10], 10, 16); err != nil {
-		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[5])
+		return fmt.Errorf("failed to convert co2 string, %s, to uint32", splitStr[10])
 	} else {
 		d.Scd.Co2 = uint16(co2)
 	}
 
+	// CO
+	if co, err := strconv.ParseFloat(splitStr[11], 32); err != nil {
+		return fmt.Errorf("failed to convert co string, %s, to float", splitStr[11])
+	} else {
+		d.Co = float32(co)
+	}
+
+	// O3
+	if o3, err := strconv.ParseFloat(splitStr[12], 32); err != nil {
+		return fmt.Errorf("failed to convert o3 string, %s, to float", splitStr[12])
+	} else {
+		d.O3 = float32(o3)
+	}
+
+	// NO2
+	if no2, err := strconv.ParseFloat(splitStr[13], 32); err != nil {
+		return fmt.Errorf("failed to convert no2 string, %s, to float", splitStr[13])
+	} else {
+		d.No2 = float32(no2)
+	}
+
 	// PoE / USB Voltage
-	if voltage, err := strconv.ParseUint(splitStr[11], 10, 8); err != nil {
-		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[13])
+	if voltage, err := strconv.ParseUint(splitStr[14], 10, 8); err != nil {
+		return fmt.Errorf("failed to convert voltage string, %s, to uint8", splitStr[14])
 	} else {
 		d.PoeUsbVoltage = uint8(voltage)
 	}
 
 	// Sensor States
-	if sensorStates, err := strconv.ParseUint(splitStr[12], 10, 8); err != nil {
-		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[14])
+	if sensorStates, err := strconv.ParseUint(splitStr[15], 10, 8); err != nil {
+		return fmt.Errorf("failed to convert states string, %s, to uint8", splitStr[15])
 	} else {
 		d.SensorStates = uint8(sensorStates)
 	}
 
-	// Gas Sensors Enable
-	if bitfield, err := strconv.ParseUint(splitStr[13], 10, 16); err != nil {
-		return fmt.Errorf("failed to interperet substring, %s,  as uint16 for gas sensors enabled: %w", splitStr[14], err)
-	} else {
-		d.Gas.SensorBitField = uint16(bitfield)
-	}
-
-	if err := d.Gas.PopulateFromString(splitStr[14]); err != nil {
-		return fmt.Errorf("failed to convert string to gas sensors: %w", err)
-	}
-
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = d.Gas.Co
-	d.O3 = d.Gas.O3
-	d.No2 = d.Gas.No2
 
 	return nil
 }
 
+// TODO: redo hehe
 func (d *DuetDataMk4Var15) doPopulateFromBytes(buff []byte) error {
 	d.SensorStates = buff[0]
 	d.PoeUsbVoltage = buff[1]
@@ -225,11 +234,6 @@ func (d *DuetDataMk4Var15) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error converting bytes to float: %w", err)
 	}
 
-	d.Gas.SensorBitField = binary.LittleEndian.Uint16(buff[70:72])
-	if err := d.Gas.PopulateFromBytes(buff[34:70]); err != nil {
-		return fmt.Errorf("error populating gas sensors from bytes: %w", err)
-	}
-
 	if err := d.Pt1.PopulateFromBytes(buff[72:90]); err != nil {
 		return fmt.Errorf("error parsing bytes for pt1: %w", err)
 	}
@@ -240,9 +244,7 @@ func (d *DuetDataMk4Var15) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("failed to merge pt: %w", err)
 	}
 	CombineTempRhMeasurements(d.Htu, d.Scd, &(d.TempRh))
-	d.Co = d.Gas.Co
-	d.O3 = d.Gas.O3
-	d.No2 = d.Gas.No2
+
 	return nil
 }
 func (d *DuetDataMk4Var15) ToMap(gatewaySerial string) map[string]any {
