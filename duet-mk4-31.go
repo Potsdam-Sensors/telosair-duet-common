@@ -59,7 +59,9 @@ func (d *DuetDataMk4Var31) ResolveTime(t uint32) {
 
 func (d *DuetDataMk4Var31) SensorMeasurements() []SensorMeasurement {
 	return []SensorMeasurement{
-		d.PtM,
+		d.Pt,
+		d.Sps,
+		// d.PtM,
 		d.TempRh,
 		d.Scd,
 		d.Mprls,
@@ -153,15 +155,6 @@ func (d *DuetDataMk4Var31) doPopulateFromSubStrings(splitStr []string) error {
 	d.SampleTimeMs = uint32(st)
 	cur++
 
-	// PMS5003 / PT
-	if err := d.Pt.FromSerialString(splitStr[cur]); err != nil {
-		return fmt.Errorf(
-			"failed to convert PT string, %s, to PlantowerData",
-			splitStr[cur],
-		)
-	}
-	cur++
-
 	// SPS30, converted by firmware to PMS5003-shaped data
 	if err := d.Sps.FromSerialString(splitStr[cur]); err != nil {
 		return fmt.Errorf(
@@ -171,9 +164,18 @@ func (d *DuetDataMk4Var31) doPopulateFromSubStrings(splitStr []string) error {
 	}
 	cur++
 
-	if err := MergePT(&d.Pt, &d.Sps, &d.PtM); err != nil {
-		return fmt.Errorf("failed to merge pt: %w", err)
+	// PMS5003 / PT
+	if err := d.Pt.FromSerialString(splitStr[cur]); err != nil {
+		return fmt.Errorf(
+			"failed to convert PT string, %s, to PlantowerData",
+			splitStr[cur],
+		)
 	}
+	cur++
+
+	// if err := MergePT(&d.Pt, &d.Sps, &d.PtM); err != nil {
+	// 	return fmt.Errorf("failed to merge pt: %w", err)
+	// }
 
 	// Temperatures
 	if temp, err := strconv.ParseFloat(splitStr[cur], 32); err != nil {
@@ -389,9 +391,9 @@ func (d *DuetDataMk4Var31) doPopulateFromBytes(buff []byte) error {
 		return fmt.Errorf("error parsing bytes for pt: %w", err)
 	}
 
-	if err := MergePT(&d.Pt, &d.Sps, &d.PtM); err != nil {
-		return fmt.Errorf("failed to merge pt: %w", err)
-	}
+	// if err := MergePT(&d.Pt, &d.Sps, &d.PtM); err != nil {
+	// 	return fmt.Errorf("failed to merge pt: %w", err)
+	// }
 
 	CombineTempRhMeasurements(d.Htu, d.Scd, &d.TempRh)
 
@@ -415,11 +417,12 @@ func (d *DuetDataMk4Var31) ToMap(gatewaySerial string) map[string]any {
 
 	maps.Copy(ret, d.Pt.ToMap("_t"))
 	maps.Copy(ret, d.Sps.ToMap("_b"))
-	maps.Copy(ret, d.PtM.ToMap("_m"))
-
-	maps.Copy(ret, d.Opc.ToMapPm("_t"))
-	maps.Copy(ret, d.Opc.ToMapPm("_b"))
 	maps.Copy(ret, d.Opc.ToMapPm("_m"))
+
+	// maps.Copy(ret, d.Opc.ToMapPm("_t"))
+	// maps.Copy(ret, d.Opc.ToMapPm("_b"))
+	// maps.Copy(ret, d.Opc.ToMapPm("_m"))
+	// maps.Copy(ret, d.Opc.ToMapPm("_opc"))
 	maps.Copy(ret, d.Opc.ToMapBins())
 	maps.Copy(ret, d.Opc.ToMapTempRh())
 
