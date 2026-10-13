@@ -13,7 +13,7 @@ func TestDuetsImplementDuetData(t *testing.T) {
 	// Compile-time checks:
 	for _, _ = range []DuetData{
 		&DuetDataMk1Var0{}, &DuetDataMk1Var2{}, &DuetDataMk1Var3{},
-		&DuetDataMk3Var1{},
+		&DuetDataMk3Var0{}, &DuetDataMk3Var1{},
 		&DuetDataMk4Var0{}, &DuetDataMk4Var1{}, &DuetDataMk4Var2{}, &DuetDataMk4Var3{},
 		&DuetDataMk4Var4{}, &DuetDataMk4Var5{}, &DuetDataMk4Var6{}, &DuetDataMk4Var7{},
 		&DuetDataMk4Var8{}, &DuetDataMk4Var9{}, &DuetDataMk4Var10{}, &DuetDataMk4Var12{},
@@ -77,11 +77,8 @@ func TestGetTypeInfo(t *testing.T) {
 
 	/* MK3 */
 	for varNum, duetTypeInstatnce := range []*DuetTypeInfo{
-		nil, &DuetTypeMk3Var1,
+		&DuetTypeMk3Var0, &DuetTypeMk3Var1,
 	} {
-		if duetTypeInstatnce == nil { // Just because Mk3.0 is not implemented, we skip it
-			continue
-		}
 		resultDuetType := getTypeInfo(3, uint8(varNum))
 		if resultDuetType == nil {
 			t.Errorf("nil for `getTypeInfo(3, %d)", uint8(varNum))
@@ -135,6 +132,7 @@ func TestDuetTypeMethods(t *testing.T) {
 		{&DuetTypeMk1Var0, "Mk1.0", &DuetDataMk1Var0{}},
 		{&DuetTypeMk1Var2, "Mk1.2", &DuetDataMk1Var2{}},
 		{&DuetTypeMk1Var3, "Mk1.3", &DuetDataMk1Var3{}},
+		{&DuetTypeMk3Var0, "Mk3.0", &DuetDataMk3Var0{}},
 		{&DuetTypeMk3Var1, "Mk3.1", &DuetDataMk3Var1{}},
 		{&DuetTypeMk4Var0, "Mk4.0", &DuetDataMk4Var0{}},
 		{&DuetTypeMk4Var1, "Mk4.1", &DuetDataMk4Var1{}},
@@ -178,6 +176,7 @@ func TestDuetMethodsSimple(t *testing.T) {
 		{&DuetDataMk1Var0{}, 1.0},
 		{&DuetDataMk1Var2{}, 1.2},
 		{&DuetDataMk1Var3{}, 1.3},
+		{&DuetDataMk3Var0{}, 3.0},
 		{&DuetDataMk3Var1{}, 3.1},
 		{&DuetDataMk4Var0{}, 4.0},
 		{&DuetDataMk4Var1{}, 4.1},
